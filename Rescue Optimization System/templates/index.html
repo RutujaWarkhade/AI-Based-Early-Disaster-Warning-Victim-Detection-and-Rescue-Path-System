@@ -1,0 +1,1712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>RESCUE OPS — MIT COLLEGE TACTICAL CENTER</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root{
+  --acid:#00ff41;--acid-dim:#00cc33;--red:#ff1744;--red-glow:rgba(255,23,68,.35);
+  --orange:#ff6d00;--cyan:#00e5ff;--gold:#ffd600;
+  --bg:#020c06;--panel:rgba(0,255,65,.04);
+  --border:rgba(0,255,65,.18);--border2:rgba(0,255,65,.07);
+  --text:#b2ffcc;--dim:#3a6645;
+  --fhud:'Share Tech Mono',monospace;
+  --fhead:'Orbitron',sans-serif;
+  --fbody:'Rajdhani',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--fbody);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:9998;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,255,65,.022) 3px,rgba(0,255,65,.022) 4px)}
+body::after{content:'';position:fixed;inset:0;z-index:9997;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 55%,rgba(0,5,2,.82) 100%)}
+
+@keyframes blink  {50%{opacity:0}}
+@keyframes pr     {0%,100%{box-shadow:0 0 8px var(--red-glow)}50%{box-shadow:0 0 30px var(--red-glow),0 0 55px var(--red-glow)}}
+@keyframes pg     {0%,100%{opacity:.7}50%{opacity:1}}
+@keyframes slidein{from{transform:translateX(-12px);opacity:0}to{transform:none;opacity:1}}
+@keyframes flicker{0%,100%{opacity:1}93%{opacity:.4}95%{opacity:1}97%{opacity:.55}98%{opacity:1}}
+@keyframes ping   {0%{transform:scale(.8);opacity:.9}100%{transform:scale(2.8);opacity:0}}
+@keyframes march  {to{stroke-dashoffset:-18}}
+@keyframes boot   {0%{clip-path:inset(0 100% 0 0)}100%{clip-path:inset(0 0% 0 0)}}
+@keyframes fadein {from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+@keyframes pulse  {0%,100%{opacity:.5}50%{opacity:1}}
+
+/* ── HEADER ── */
+header{display:flex;align-items:center;justify-content:space-between;padding:0 26px;height:56px;
+  background:linear-gradient(90deg,rgba(0,255,65,.06),rgba(0,255,65,.02) 50%,rgba(0,255,65,.06));
+  border-bottom:1px solid var(--border);position:relative;animation:flicker 9s infinite}
+header::before{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--acid),transparent);animation:pg 2s infinite}
+.hl{display:flex;align-items:center;gap:14px}
+.hlogo{width:34px;height:34px;border:2px solid var(--acid);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:1rem;
+  box-shadow:0 0 14px rgba(0,255,65,.4);animation:pr 2s infinite;position:relative}
+.hlogo::after{content:'';position:absolute;inset:-6px;border-radius:50%;
+  border:1px solid rgba(0,255,65,.22);animation:ping 1.9s cubic-bezier(0,0,.2,1) infinite}
+.htitle{font-family:var(--fhead);font-size:1rem;font-weight:900;letter-spacing:.18em;
+  color:var(--acid);text-shadow:0 0 18px rgba(0,255,65,.6);animation:boot .8s ease-out both}
+.hsub{font-family:var(--fhud);font-size:.54rem;letter-spacing:.16em;color:var(--dim);margin-top:1px}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--acid);box-shadow:0 0 8px var(--acid);
+  animation:blink 1.2s step-start infinite;display:inline-block;margin-right:5px;vertical-align:middle}
+.hr{display:flex;align-items:center;gap:18px}
+.hstat{text-align:center;font-family:var(--fhud);font-size:.56rem;color:var(--dim);letter-spacing:.1em}
+.hstat .v{display:block;font-size:.86rem;color:var(--acid);text-shadow:0 0 9px rgba(0,255,65,.5)}
+.hclock{font-family:var(--fhud);font-size:1.05rem;color:var(--acid);
+  text-shadow:0 0 12px rgba(0,255,65,.5);letter-spacing:.08em}
+
+/* ── PAGE LAYOUT ── */
+.page{display:grid;grid-template-columns:1fr 360px;gap:9px;padding:9px 13px 13px;max-width:1680px;margin:0 auto}
+
+/* ── PANEL ── */
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:4px;position:relative;overflow:hidden}
+.panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--acid) 50%,transparent);opacity:.45}
+.panel::after{content:'';position:absolute;bottom:0;right:0;width:14px;height:14px;
+  border-bottom:1px solid var(--acid-dim);border-right:1px solid var(--acid-dim);opacity:.45}
+.ctl{position:absolute;top:0;left:0;width:13px;height:13px;
+  border-top:1px solid var(--acid-dim);border-left:1px solid var(--acid-dim);opacity:.45}
+.pi{padding:11px 13px;overflow:visible}
+.pl{font-family:var(--fhud);font-size:.56rem;letter-spacing:.22em;color:var(--dim);
+  margin-bottom:9px;text-transform:uppercase;display:flex;align-items:center;gap:6px}
+.pl::before{content:'//';color:var(--acid-dim);font-size:.66rem}
+
+/* ── 4-CAMERA GRID ── */
+.cam-panel{grid-column:1;grid-row:1}
+.cam-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.cam-cell{position:relative;border:1px solid rgba(0,255,65,.14);border-radius:3px;overflow:hidden;background:#000;aspect-ratio:16/9}
+.cam-cell img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* camera selector row */
+.cam-sel{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:9px;
+  padding:7px 10px;background:rgba(0,255,65,.03);border:1px solid var(--border2);border-radius:3px}
+.sel-label{font-family:var(--fhud);font-size:.52rem;letter-spacing:.18em;color:var(--dim);flex-shrink:0}
+.sel-btns{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+.sel-btn{font-family:var(--fhud);font-size:.58rem;letter-spacing:.1em;cursor:pointer;
+  padding:4px 12px;border-radius:3px;border:1px solid rgba(0,255,65,.22);
+  background:rgba(0,255,65,.04);color:var(--dim);transition:all .2s;user-select:none;
+  display:flex;align-items:center;gap:5px}
+.sel-btn:hover{border-color:rgba(0,255,65,.5);color:var(--text);background:rgba(0,255,65,.08)}
+.sel-btn.active{border-color:var(--acid);background:rgba(0,255,65,.14);
+  color:var(--acid);box-shadow:0 0 10px rgba(0,255,65,.2)}
+.sel-btn .ck{width:10px;height:10px;border-radius:2px;border:1.5px solid currentColor;
+  display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-size:8px}
+.sel-btn.active .ck::after{content:'✓';font-size:8px;line-height:1}
+.sel-all{margin-left:auto;font-family:var(--fhud);font-size:.52rem;letter-spacing:.12em;
+  cursor:pointer;padding:3px 10px;border-radius:2px;
+  border:1px solid rgba(0,229,255,.25);background:rgba(0,229,255,.06);
+  color:var(--cyan);transition:all .2s}
+.sel-all:hover{border-color:var(--cyan);background:rgba(0,229,255,.14)}
+
+/* dynamic grid based on active cam count */
+.cam-grid{transition:all .3s}
+.cam-grid.cols-1{grid-template-columns:1fr}
+.cam-grid.cols-1 .cam-cell{aspect-ratio:16/7;max-height:480px}
+.cam-grid.cols-2{grid-template-columns:1fr 1fr}
+.cam-grid.cols-3{grid-template-columns:1fr 1fr}
+.cam-grid.cols-4{grid-template-columns:1fr 1fr}
+.cam-cell.span2{grid-column:1/3}
+.cam-cell{transition:all .3s}
+/* corner brackets */
+.cc-tl,.cc-tr,.cc-bl,.cc-br{position:absolute;width:14px;height:14px;pointer-events:none;z-index:2}
+.cc-tl{top:4px;left:4px;border-top:2px solid var(--acid);border-left:2px solid var(--acid)}
+.cc-tr{top:4px;right:4px;border-top:2px solid var(--acid);border-right:2px solid var(--acid)}
+.cc-bl{bottom:4px;left:4px;border-bottom:2px solid var(--acid);border-left:2px solid var(--acid)}
+.cc-br{bottom:4px;right:4px;border-bottom:2px solid var(--acid);border-right:2px solid var(--acid)}
+/* cam label badge */
+.cam-label{position:absolute;top:6px;left:50%;transform:translateX(-50%);
+  font-family:var(--fhud);font-size:.52rem;letter-spacing:.12em;
+  background:rgba(2,10,4,.88);border:1px solid rgba(0,255,65,.28);border-radius:2px;
+  padding:1px 8px;color:var(--acid);white-space:nowrap;z-index:3}
+/* REC dot */
+.cam-rec{position:absolute;top:6px;right:8px;display:flex;align-items:center;gap:3px;
+  font-family:var(--fhud);font-size:.48rem;color:var(--red);z-index:3}
+.cam-rec .d{width:5px;height:5px;border-radius:50%;background:var(--red);animation:blink .9s step-start infinite}
+/* online/offline badge */
+.cam-status{position:absolute;bottom:6px;left:6px;font-family:var(--fhud);font-size:.48rem;
+  padding:1px 6px;border-radius:2px;z-index:3;transition:all .4s}
+.cam-status.on {background:rgba(0,255,65,.12);border:1px solid rgba(0,255,65,.35);color:var(--acid)}
+.cam-status.off{background:rgba(255,23,68,.10);border:1px solid rgba(255,23,68,.3);color:var(--red)}
+/* person count badge */
+.cam-persons{position:absolute;bottom:6px;right:6px;font-family:var(--fhud);font-size:.52rem;
+  padding:1px 7px;border-radius:2px;background:rgba(255,23,68,.12);
+  border:1px solid rgba(255,23,68,.3);color:var(--red);z-index:3}
+.cam-persons.none{background:rgba(0,255,65,.05);border-color:rgba(0,255,65,.15);color:var(--dim)}
+
+/* status bar below cameras */
+.cam-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:7px}
+.cb{background:rgba(0,255,65,.03);border:1px solid var(--border2);border-radius:3px;
+  padding:6px 8px;position:relative}
+.cb-name{font-family:var(--fhud);font-size:.5rem;letter-spacing:.1em;color:var(--dim);margin-bottom:2px}
+.cb-status{font-family:var(--fhud);font-size:.64rem;font-weight:700;transition:color .4s}
+.cb-gps{font-family:var(--fhud);font-size:.44rem;color:var(--dim);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cb-dot{position:absolute;top:6px;right:6px;width:6px;height:6px;border-radius:50%;transition:background .4s}
+
+/* ── DISASTER CONTROL PANEL ── */
+.dcp{background:rgba(255,109,0,.04);border:1px solid rgba(255,109,0,.2);border-radius:4px;padding:10px 12px;margin-bottom:10px}
+.dcp-title{font-family:var(--fhead);font-size:.56rem;letter-spacing:.18em;color:var(--orange);
+  margin-bottom:8px;display:flex;align-items:center;gap:7px}
+.dcp-title::before{content:'';width:6px;height:6px;border-radius:50%;
+  background:var(--orange);box-shadow:0 0 8px var(--orange);display:inline-block}
+.mode-btns{display:flex;gap:6px;margin-bottom:9px}
+.mbtn{flex:1;font-family:var(--fhud);font-size:.55rem;letter-spacing:.1em;padding:6px 4px;
+  border-radius:3px;cursor:pointer;text-align:center;transition:all .2s;border:1px solid rgba(255,255,255,.1);
+  color:var(--dim);background:rgba(0,0,0,.3);user-select:none}
+.mbtn:hover{opacity:.85}
+.mbtn.mode-normal  {border-color:rgba(0,255,65,.3);color:var(--acid)}
+.mbtn.mode-disaster{border-color:rgba(255,109,0,.3);color:var(--orange)}
+.mbtn.mode-flood   {border-color:rgba(0,229,255,.3);color:var(--cyan)}
+.mbtn.active.mode-normal  {background:rgba(0,255,65,.15);box-shadow:0 0 12px rgba(0,255,65,.25)}
+.mbtn.active.mode-disaster{background:rgba(255,109,0,.15);box-shadow:0 0 12px rgba(255,109,0,.25)}
+.mbtn.active.mode-flood   {background:rgba(0,229,255,.15);box-shadow:0 0 12px rgba(0,229,255,.25)}
+.mode-desc{font-family:var(--fhud);font-size:.48rem;color:var(--dim);
+  padding:5px 8px;background:rgba(0,0,0,.25);border-radius:2px;margin-bottom:8px;
+  border-left:2px solid var(--orange);line-height:1.55}
+.dcp-row{display:flex;gap:6px;margin-bottom:6px;align-items:center}
+.dcp-inp{flex:1;font-family:var(--fhud);font-size:.52rem;background:rgba(0,0,0,.4);
+  border:1px solid rgba(255,255,255,.1);border-radius:2px;padding:4px 7px;
+  color:var(--text);outline:none}
+.dcp-inp:focus{border-color:var(--orange)}
+.dcp-btn{font-family:var(--fhud);font-size:.5rem;letter-spacing:.08em;padding:5px 10px;
+  border-radius:2px;cursor:pointer;border:1px solid var(--orange);
+  background:rgba(255,109,0,.12);color:var(--orange);white-space:nowrap;transition:all .2s}
+.dcp-btn:hover{background:rgba(255,109,0,.25)}
+.dcp-btn.red{border-color:var(--red);background:rgba(255,23,68,.1);color:var(--red)}
+.dcp-btn.red:hover{background:rgba(255,23,68,.22)}
+.dcp-btn.cyan{border-color:var(--cyan);background:rgba(0,229,255,.08);color:var(--cyan)}
+.dcp-btn.cyan:hover{background:rgba(0,229,255,.18)}
+.zone-list{max-height:90px;overflow-y:auto;margin-top:4px}
+.zone-item{display:flex;align-items:center;justify-content:space-between;
+  padding:3px 7px;margin-bottom:3px;border-radius:2px;font-family:var(--fhud);font-size:.47rem}
+.zone-item.rubble {background:rgba(255,109,0,.1);border:1px solid rgba(255,109,0,.25);color:var(--orange)}
+.zone-item.flood  {background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.25);color:var(--cyan)}
+.zone-item.fire   {background:rgba(255,23,68,.1);border:1px solid rgba(255,23,68,.25);color:var(--red)}
+.zone-item.collapse{background:rgba(255,214,0,.1);border:1px solid rgba(255,214,0,.25);color:var(--gold)}
+.zone-x{cursor:pointer;opacity:.6;font-size:.7rem;padding:0 4px}
+.zone-x:hover{opacity:1}
+/* triage badge */
+.triage-hi{background:rgba(255,23,68,.2);border:1px solid rgba(255,23,68,.5);color:var(--red);
+  font-family:var(--fhud);font-size:.46rem;padding:1px 5px;border-radius:2px}
+.triage-mid{background:rgba(255,109,0,.2);border:1px solid rgba(255,109,0,.5);color:var(--orange);
+  font-family:var(--fhud);font-size:.46rem;padding:1px 5px;border-radius:2px}
+.triage-lo{background:rgba(0,255,65,.08);border:1px solid rgba(0,255,65,.2);color:var(--dim);
+  font-family:var(--fhud);font-size:.46rem;padding:1px 5px;border-radius:2px}
+.route-warn{font-family:var(--fhud);font-size:.48rem;color:var(--orange);
+  background:rgba(255,109,0,.1);border:1px solid rgba(255,109,0,.3);
+  border-radius:2px;padding:3px 7px;margin-top:4px}
+.route-mode-badge{font-family:var(--fhud);font-size:.44rem;padding:1px 5px;border-radius:2px;margin-left:4px}
+.rmb-driving{background:rgba(0,255,65,.08);color:var(--acid);border:1px solid rgba(0,255,65,.2)}
+.rmb-foot   {background:rgba(255,109,0,.1);color:var(--orange);border:1px solid rgba(255,109,0,.25)}
+.rmb-straight{background:rgba(255,214,0,.1);color:var(--gold);border:1px solid rgba(255,214,0,.25)}
+
+/* ── SIDE PANEL (GPS + Teams) ── */
+.side{grid-column:2;grid-row:1;display:flex;flex-direction:column;gap:9px}
+
+/* GPS */
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px}
+.cc{background:rgba(0,255,65,.03);border:1px solid var(--border2);border-radius:3px;padding:6px 9px;position:relative;overflow:hidden}
+.cc::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--acid-dim),transparent);opacity:.25}
+.cc label{font-family:var(--fhud);font-size:.5rem;letter-spacing:.14em;color:var(--dim);display:block;margin-bottom:2px}
+.cc .cv{font-family:var(--fhud);font-size:.82rem;color:var(--acid);
+  text-shadow:0 0 8px rgba(0,255,65,.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gfoot{display:flex;align-items:center;gap:9px}
+.gbadge{font-family:var(--fhud);font-size:.54rem;letter-spacing:.1em;padding:2px 8px;border-radius:2px;
+  border:1px solid rgba(255,109,0,.4);background:rgba(255,109,0,.08);color:var(--orange);transition:all .4s;white-space:nowrap}
+.gbadge.locked{border-color:rgba(0,255,65,.4);background:rgba(0,255,65,.08);color:var(--acid)}
+.abw{flex:1}.abl{font-family:var(--fhud);font-size:.46rem;color:var(--dim);margin-bottom:2px}
+.ab{height:3px;background:rgba(255,255,255,.05);border-radius:2px}
+.abf{height:100%;border-radius:2px;background:var(--acid);width:0%;transition:width .6s;box-shadow:0 0 6px var(--acid)}
+
+/* Victim loc box */
+.vloc-box{margin-top:8px;background:rgba(255,23,68,.05);border:1px solid rgba(255,23,68,.2);
+  border-radius:3px;padding:7px 9px;font-family:var(--fhud);font-size:.6rem}
+.vloc-title{color:var(--red);font-size:.58rem;letter-spacing:.14em;margin-bottom:4px;
+  display:flex;align-items:center;gap:5px}
+.vloc-title::before{content:'📍'}
+.vloc-row{display:flex;justify-content:space-between;margin-bottom:2px}
+.vloc-row .k{color:var(--dim)}.vloc-row .vv{color:var(--acid)}
+.vloc-address{margin-top:5px;padding-top:4px;border-top:1px solid rgba(255,23,68,.1);
+  color:var(--cyan);font-size:.56rem;line-height:1.5}
+
+/* Teams */
+#tlist{list-style:none;display:flex;flex-direction:column;gap:5px}
+.ti{display:flex;align-items:flex-start;gap:6px;padding:7px 9px;
+  background:rgba(255,255,255,.016);border:1px solid var(--border2);border-radius:3px;
+  position:relative;overflow:hidden;transition:border-color .3s;animation:slidein .3s ease both}
+.ti.nearest{border-color:var(--acid);background:rgba(0,255,65,.07);
+  box-shadow:0 0 14px rgba(0,255,65,.1),inset 0 0 14px rgba(0,255,65,.04)}
+.ti.nearest::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;
+  background:var(--acid);box-shadow:0 0 8px var(--acid)}
+.trank{font-family:var(--fhud);font-size:.58rem;color:var(--dim);width:14px;text-align:center;flex-shrink:0;margin-top:2px}
+.tdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px;box-shadow:0 0 6px currentColor}
+.tinfo{flex:1;min-width:0}
+.tname{font-weight:700;font-size:.76rem;font-family:var(--fbody);letter-spacing:.03em}
+.tloc{font-family:var(--fhud);font-size:.48rem;color:var(--cyan);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tpos{font-family:var(--fhud);font-size:.44rem;color:var(--dim);margin-top:1px}
+.tdcol{text-align:right;flex-shrink:0}
+.tdv{font-family:var(--fhud);font-size:.8rem;color:var(--acid);font-weight:700}
+.tds{font-family:var(--fhud);font-size:.48rem;color:var(--dim)}
+.ntag{position:absolute;right:6px;top:6px;font-family:var(--fhud);font-size:.44rem;letter-spacing:.1em;
+  color:var(--acid);background:rgba(0,255,65,.1);padding:1px 5px;border-radius:2px;border:1px solid rgba(0,255,65,.28)}
+.ti.nearest .tdcol{padding-right:50px}
+
+/* ── ROUTE STEPS ── */
+.rp{grid-column:1/3;grid-row:2}
+.steps-wrap{display:flex;gap:10px;flex-wrap:wrap}
+.sbox{flex:1;min-width:240px}
+.shdr{font-family:var(--fhud);font-size:.56rem;letter-spacing:.16em;color:var(--acid);
+  margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.smeta{font-size:.68rem;color:var(--cyan);font-family:var(--fhud);margin-left:auto}
+.slist{list-style:none;display:flex;flex-direction:column;gap:3px;max-height:180px;overflow-y:auto}
+.slist::-webkit-scrollbar{width:3px}
+.slist::-webkit-scrollbar-thumb{background:var(--acid-dim);border-radius:2px}
+.sitem{display:flex;align-items:flex-start;gap:6px;padding:4px 7px;
+  background:rgba(0,255,65,.02);border:1px solid var(--border2);border-radius:3px;animation:fadein .3s ease both}
+.sicon{font-size:.78rem;flex-shrink:0;margin-top:1px}
+.stxt{font-family:var(--fhud);font-size:.56rem;color:var(--text);line-height:1.5;flex:1}
+.sdst{font-family:var(--fhud);font-size:.52rem;color:var(--dim);flex-shrink:0;text-align:right;margin-top:1px}
+
+/* ── PERSONS ── */
+.pp{grid-column:1/3;grid-row:3}
+.pgrid{display:flex;flex-wrap:wrap;gap:8px}
+.pcard{flex:1;min-width:180px;max-width:240px;background:rgba(0,255,65,.03);
+  border:1px solid rgba(0,255,65,.14);border-radius:4px;padding:8px 10px;
+  position:relative;overflow:hidden;animation:slidein .4s ease both;transition:border-color .3s,transform .2s}
+.pcard:hover{border-color:rgba(0,255,65,.38);transform:translateY(-1px)}
+.pcard::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--acid),transparent);opacity:.38}
+.phdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.pid{font-family:var(--fhud);font-size:.66rem;color:var(--acid);font-weight:700;
+  display:flex;align-items:center;gap:4px}
+.pping{width:6px;height:6px;border-radius:50%;background:var(--red);
+  box-shadow:0 0 7px var(--red);animation:blink .8s step-start infinite;flex-shrink:0}
+.pcam-tag{font-family:var(--fhud);font-size:.46rem;padding:1px 5px;border-radius:2px;
+  background:rgba(0,229,255,.07);border:1px solid rgba(0,229,255,.18);color:var(--cyan)}
+.pconf{font-family:var(--fhud);font-size:.52rem;padding:1px 4px;border-radius:2px;
+  background:rgba(0,255,65,.06);border:1px solid rgba(0,255,65,.18);color:var(--acid)}
+.pdata{font-family:var(--fhud);font-size:.58rem;color:var(--text);line-height:1.75}
+.pdata span{color:var(--acid)}
+.pnear{margin-top:4px;padding-top:4px;border-top:1px solid rgba(0,255,65,.09);
+  font-family:var(--fhud);font-size:.56rem;color:var(--orange);display:flex;align-items:center;gap:4px}
+.pnear::before{content:'▶';font-size:.44rem}
+.proute{font-family:var(--fhud);font-size:.52rem;color:var(--cyan);margin-top:2px}
+.paddress{font-family:var(--fhud);font-size:.5rem;color:var(--dim);margin-top:3px;
+  padding-top:4px;border-top:1px dashed rgba(0,255,65,.1);line-height:1.4}
+
+/* ── ALERT ── */
+.aw{grid-column:1/3;grid-row:5}
+#abox{display:none;align-items:center;gap:14px;padding:11px 18px;
+  background:rgba(255,23,68,.06);border:1px solid var(--red);border-radius:4px;
+  box-shadow:0 0 28px var(--red-glow);animation:pr 2s infinite}
+#abox.show{display:flex}
+.aicon{font-size:1.5rem;animation:blink .7s step-start infinite;flex-shrink:0}
+.atxt .amsg{font-family:var(--fhead);font-size:.76rem;font-weight:700;color:var(--red);letter-spacing:.05em}
+.atxt .asub{font-family:var(--fhud);font-size:.6rem;color:var(--text);margin-top:3px}
+.art{margin-left:auto;font-family:var(--fhud);font-size:.6rem;color:var(--dim);text-align:right}
+
+/* ── MAP ── */
+/* .mp replaced with inline */
+/* #map replaced with inline */
+.leaflet-tile-pane{filter:brightness(.48) saturate(.42) hue-rotate(88deg) contrast(1.12)}
+.leaflet-control-zoom a{background:#0a1f10!important;color:var(--acid)!important;border-color:var(--border)!important}
+.leaflet-popup-content-wrapper{background:#040e06;border:1px solid var(--border);color:var(--text);
+  border-radius:4px;font-family:var(--fhud);box-shadow:0 0 18px rgba(0,255,65,.14)}
+.leaflet-popup-tip{background:#040e06}
+.leaflet-popup-content{font-size:.68rem;line-height:1.85}
+.route-anim{stroke-dasharray:12 6;animation:march .55s linear infinite}
+
+/* ── DATA HISTORY PANEL ── */
+.hp{grid-column:1/3;grid-row:7;margin-top:4px}
+.htabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:8px}
+.htab{font-family:var(--fhud);font-size:.58rem;letter-spacing:.1em;padding:6px 18px;
+  cursor:pointer;color:var(--dim);border-bottom:2px solid transparent;transition:all .2s;user-select:none}
+.htab:hover{color:var(--text)}
+.htab.active{color:var(--acid);border-bottom-color:var(--acid)}
+.hbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px}
+.hbar-left{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.hcount{font-family:var(--fhud);font-size:.54rem;color:var(--dim)}
+.hcount span{color:var(--acid)}
+.hbtn{font-family:var(--fhud);font-size:.54rem;letter-spacing:.1em;padding:4px 14px;
+  border-radius:3px;cursor:pointer;transition:all .2s;border:1px solid;user-select:none}
+.hbtn.dl{border-color:rgba(0,229,255,.35);background:rgba(0,229,255,.06);color:var(--cyan)}
+.hbtn.dl:hover{background:rgba(0,229,255,.14);box-shadow:0 0 10px rgba(0,229,255,.2)}
+.hbtn.clr{border-color:rgba(255,23,68,.3);background:rgba(255,23,68,.05);color:var(--red)}
+.hbtn.clr:hover{background:rgba(255,23,68,.12)}
+.htable-wrap{overflow-x:auto;max-height:280px;overflow-y:auto;
+  border:1px solid var(--border2);border-radius:3px;
+  scrollbar-width:thin;scrollbar-color:rgba(0,255,65,.2) transparent}
+.htable-wrap::-webkit-scrollbar{width:5px;height:5px}
+.htable-wrap::-webkit-scrollbar-thumb{background:rgba(0,255,65,.2);border-radius:3px}
+table.hlog{width:100%;border-collapse:collapse;font-family:var(--fhud);font-size:.52rem}
+table.hlog th{background:rgba(0,255,65,.07);color:var(--dim);letter-spacing:.1em;
+  padding:5px 10px;text-align:left;border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:1;white-space:nowrap}
+table.hlog td{padding:4px 10px;border-bottom:1px solid var(--border2);
+  color:var(--text);white-space:nowrap;transition:background .2s}
+table.hlog tr:hover td{background:rgba(0,255,65,.04)}
+table.hlog .tc{color:var(--dim)}
+table.hlog .tp{color:var(--red);font-weight:700}
+table.hlog .tg{color:var(--cyan)}
+table.hlog .tn{color:var(--acid)}
+table.hlog .tconf{color:var(--gold)}
+.hempty{font-family:var(--fhud);font-size:.6rem;color:var(--dim);
+  text-align:center;padding:28px;letter-spacing:.12em}
+.hstats{display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.hstat-box{background:rgba(0,255,65,.03);border:1px solid var(--border2);
+  border-radius:3px;padding:6px 12px;font-family:var(--fhud);font-size:.5rem;color:var(--dim)}
+.hstat-box .sv{font-size:.78rem;color:var(--acid);display:block;margin-bottom:1px}
+
+@media(max-width:1000px){
+  .page{grid-template-columns:1fr}
+  .cam-panel,.side,.rp,.pp,.aw,.mp,.hp{grid-column:1}
+  .cam-panel{grid-row:1}.side{grid-row:2}.rp{grid-row:3}.pp{grid-row:4}.aw{grid-row:5}.mp{grid-row:6}.hp{grid-row:7}.dcp{grid-row:auto}
+  #map{height:320px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hl">
+    <div class="hlogo">🎯</div>
+    <div>
+      <div class="htitle">RESCUE OPS — · 4-CAM SYSTEM</div>
+      <div class="hsub"><span class="sdot"></span>YOLOV8 · 4 MOBILE CAMERAS · LIVE GPS · OSRM ROUTING · AURANGABAD</div>
+    </div>
+  </div>
+  <div class="hr">
+    <div class="hstat">VICTIMS<span class="v" id="hv">0</span></div>
+    <div class="hstat">CAMERAS<span class="v" id="hc">0/4</span></div>
+    <div class="hstat">ROUTE<span class="v" id="hr2">—</span></div>
+    <div class="hclock" id="clock">--:--:--</div>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- 4-CAMERA GRID -->
+  <div class="panel cam-panel">
+    <div class="pi">
+      <div class="ctl"></div>
+      <div class="pl" id="cam-panel-title">LIVE FEEDS — ALL 4 CAMERAS — YOLOV8 DETECTION</div>
+
+      <!-- Camera selector -->
+      <div class="cam-sel">
+        <span class="sel-label">SELECT CAMERAS:</span>
+        <div class="sel-btns">
+          <div class="sel-btn active" id="sbtn-1" onclick="toggleCam(1)">
+            <span class="ck"></span>CAM-1 · North Gate
+          </div>
+          <div class="sel-btn active" id="sbtn-2" onclick="toggleCam(2)">
+            <span class="ck"></span>CAM-2 · East Block
+          </div>
+          <div class="sel-btn active" id="sbtn-3" onclick="toggleCam(3)">
+            <span class="ck"></span>CAM-3 · Main Building
+          </div>
+          <div class="sel-btn active" id="sbtn-4" onclick="toggleCam(4)">
+            <span class="ck"></span>CAM-4 · South Exit
+          </div>
+        </div>
+        <div style="display:flex;gap:5px;margin-left:auto">
+          <div class="sel-all" onclick="selectAll()">ALL</div>
+          <div class="sel-all" onclick="selectNone()" style="border-color:rgba(255,23,68,.3);color:var(--red);background:rgba(255,23,68,.05)">RESET</div>
+        </div>
+      </div>
+
+      <div class="cam-grid" id="camgrid">
+        <!-- CAM 1 -->
+        <div class="cam-cell" id="cell-1">
+          <img src="/video_feed/1" alt="CAM1" loading="lazy"/>
+          <div class="cc-tl"></div><div class="cc-tr"></div>
+          <div class="cc-bl"></div><div class="cc-br"></div>
+          <div class="cam-label" id="clbl-1">CAM-1 · North Gate</div>
+          <div class="cam-rec"><div class="d"></div>REC</div>
+          <div class="cam-status off" id="cst-1">OFFLINE</div>
+          <div class="cam-persons none" id="cp-1">P:0</div>
+        </div>
+        <!-- CAM 2 -->
+        <div class="cam-cell" id="cell-2">
+          <img src="/video_feed/2" alt="CAM2" loading="lazy"/>
+          <div class="cc-tl"></div><div class="cc-tr"></div>
+          <div class="cc-bl"></div><div class="cc-br"></div>
+          <div class="cam-label" id="clbl-2">CAM-2 · East Block</div>
+          <div class="cam-rec"><div class="d"></div>REC</div>
+          <div class="cam-status off" id="cst-2">OFFLINE</div>
+          <div class="cam-persons none" id="cp-2">P:0</div>
+        </div>
+        <!-- CAM 3 -->
+        <div class="cam-cell" id="cell-3">
+          <img src="/video_feed/3" alt="CAM3" loading="lazy"/>
+          <div class="cc-tl"></div><div class="cc-tr"></div>
+          <div class="cc-bl"></div><div class="cc-br"></div>
+          <div class="cam-label" id="clbl-3">CAM-3 · Main Building</div>
+          <div class="cam-rec"><div class="d"></div>REC</div>
+          <div class="cam-status off" id="cst-3">OFFLINE</div>
+          <div class="cam-persons none" id="cp-3">P:0</div>
+        </div>
+        <!-- CAM 4 -->
+        <div class="cam-cell" id="cell-4">
+          <img src="/video_feed/4" alt="CAM4" loading="lazy"/>
+          <div class="cc-tl"></div><div class="cc-tr"></div>
+          <div class="cc-bl"></div><div class="cc-br"></div>
+          <div class="cam-label" id="clbl-4">CAM-4 · South Exit</div>
+          <div class="cam-rec"><div class="d"></div>REC</div>
+          <div class="cam-status off" id="cst-4">OFFLINE</div>
+          <div class="cam-persons none" id="cp-4">P:0</div>
+        </div>
+      </div>
+
+      <!-- Per-camera status bar -->
+      <div class="cam-bar" id="cambar">
+        <div class="cb" id="cb-1">
+          <div class="cb-name">CAM-1 · North Gate</div>
+          <div class="cb-status" id="cbs-1" style="color:var(--red)">OFFLINE</div>
+          <div class="cb-gps" id="cbg-1">GPS: —</div>
+          <div class="cb-dot" id="cbd-1" style="background:var(--red)"></div>
+        </div>
+        <div class="cb" id="cb-2">
+          <div class="cb-name">CAM-2 · East Block</div>
+          <div class="cb-status" id="cbs-2" style="color:var(--red)">OFFLINE</div>
+          <div class="cb-gps" id="cbg-2">GPS: —</div>
+          <div class="cb-dot" id="cbd-2" style="background:var(--red)"></div>
+        </div>
+        <div class="cb" id="cb-3">
+          <div class="cb-name">CAM-3 · Main Building</div>
+          <div class="cb-status" id="cbs-3" style="color:var(--red)">OFFLINE</div>
+          <div class="cb-gps" id="cbg-3">GPS: —</div>
+          <div class="cb-dot" id="cbd-3" style="background:var(--red)"></div>
+        </div>
+        <div class="cb" id="cb-4">
+          <div class="cb-name">CAM-4 · South Exit</div>
+          <div class="cb-status" id="cbs-4" style="color:var(--red)">OFFLINE</div>
+          <div class="cb-gps" id="cbg-4">GPS: —</div>
+          <div class="cb-dot" id="cbd-4" style="background:var(--red)"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDE: GPS + TEAMS -->
+  <div class="side">
+    <!-- GPS Panel -->
+    <div class="panel">
+      <div class="pi">
+        <div class="ctl"></div>
+        <div class="pl">GPS — BEST AVAILABLE CAMERA</div>
+        <div class="cgrid">
+          <div class="cc"><label>LATITUDE</label><div class="cv" id="vla">ACQUIRING…</div></div>
+          <div class="cc"><label>LONGITUDE</label><div class="cv" id="vlo">ACQUIRING…</div></div>
+          <div class="cc"><label>ALTITUDE (m)</label><div class="cv" id="valt">—</div></div>
+          <div class="cc"><label>ACCURACY (m)</label><div class="cv" id="vacc">—</div></div>
+        </div>
+        <div class="gfoot">
+          <div class="gbadge" id="gbadge">⬤ NO FIX</div>
+          <div class="abw">
+            <div class="abl">SIGNAL QUALITY</div>
+            <div class="ab"><div class="abf" id="abf"></div></div>
+          </div>
+        </div>
+        <div class="vloc-box" id="vloc-box" style="display:none">
+          <div class="vloc-title">DETECTED PERSON EXACT LOCATION</div>
+          <div class="vloc-row"><span class="k">LAT</span><span class="vv" id="vl-lat">—</span></div>
+          <div class="vloc-row"><span class="k">LON</span><span class="vv" id="vl-lon">—</span></div>
+          <div class="vloc-row"><span class="k">ALT</span><span class="vv" id="vl-alt">—</span></div>
+          <div class="vloc-row"><span class="k">ACCURACY</span><span class="vv" id="vl-acc">—</span></div>
+          <div class="vloc-address" id="vl-addr">Resolving address…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Teams Panel -->
+    <div class="panel">
+      <div class="pi">
+        <div class="ctl"></div>
+        <div class="pl">RESCUE TEAMS — NEAREST FIRST</div>
+        <ul id="tlist">
+          <li style="color:var(--dim);font-family:var(--fhud);font-size:.68rem;padding:5px 0">AWAITING GPS LOCK…</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROUTE STEPS -->
+  <div class="panel rp">
+    <div class="pi">
+      <div class="ctl"></div>
+      <div class="pl">ROAD ROUTE — TURN-BY-TURN TO NEAREST RESCUE TEAM</div>
+      <div class="steps-wrap" id="sw">
+        <div style="color:var(--dim);font-family:var(--fhud);font-size:.68rem;padding:4px 0">
+          ROUTE WILL APPEAR AFTER GPS LOCK…
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PERSONS -->
+  <div class="panel pp">
+    <div class="pi">
+      <div class="ctl"></div>
+      <div class="pl">DETECTED VICTIMS — ALL CAMERAS — EXACT GPS + NEAREST RESCUE</div>
+      <div class="pgrid" id="pg">
+        <div style="color:var(--dim);font-family:var(--fhud);font-size:.68rem;padding:4px 0">NO PERSONS DETECTED…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DISASTER CONTROL PANEL -->
+  <div class="panel" style="grid-column:1/3;grid-row:4">
+    <div class="pi">
+      <div class="ctl"></div>
+      <div class="pl">🚨 DISASTER ROUTING CONTROL — SMART PATH ENGINE</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+
+        <!-- COL 1: Routing Mode -->
+        <div class="dcp">
+          <div class="dcp-title">ROUTING MODE</div>
+          <div class="mode-btns">
+            <div class="mbtn mode-normal active"   id="mbtn-normal"   onclick="setMode('normal')"  >🚗 NORMAL</div>
+            <div class="mbtn mode-disaster"        id="mbtn-disaster" onclick="setMode('disaster')">🦺 DISASTER</div>
+            <div class="mbtn mode-flood"           id="mbtn-flood"    onclick="setMode('flood')"   >🌊 FLOOD</div>
+          </div>
+          <div class="mode-desc" id="mode-desc">
+            🚗 NORMAL — Vehicle road routing. Uses real roads.<br>Full turn-by-turn navigation.
+          </div>
+          <div style="font-family:var(--fhud);font-size:.46rem;color:var(--dim);margin-top:4px">
+            Current mode: <span id="mode-label" style="color:var(--acid)">NORMAL</span>
+            &nbsp;·&nbsp; Route cache cleared on mode change
+          </div>
+        </div>
+
+        <!-- COL 2: Block Zones -->
+        <div class="dcp">
+          <div class="dcp-title">MARK BLOCKED ZONES</div>
+          <div style="font-family:var(--fhud);font-size:.46rem;color:var(--dim);margin-bottom:6px">
+            Click map to place zone, or enter coords manually
+          </div>
+          <div class="dcp-row">
+            <select id="zone-type" class="dcp-inp" style="cursor:pointer">
+              <option value="rubble">🧱 Rubble / Collapse</option>
+              <option value="flood">🌊 Flood</option>
+              <option value="fire">🔥 Fire</option>
+              <option value="collapse">🏚 Building Collapse</option>
+            </select>
+          </div>
+          <div class="dcp-row">
+            <input id="zone-label" class="dcp-inp" placeholder="Zone label (e.g. Block A collapsed)" type="text"/>
+          </div>
+          <div class="dcp-row">
+            <input id="zone-radius" class="dcp-inp" placeholder="Radius m (default 50)" type="number" value="50"/>
+            <div class="dcp-btn" onclick="addBlockedZoneFromMap()">📍 CLICK MAP</div>
+          </div>
+          <div class="dcp-row">
+            <div class="dcp-btn red" onclick="clearAllZones()">🗑 CLEAR ALL ZONES</div>
+          </div>
+          <div class="zone-list" id="zone-list"></div>
+        </div>
+
+        <!-- COL 3: Manual Victim Pin -->
+        <div class="dcp">
+          <div class="dcp-title">MANUAL VICTIM PIN</div>
+          <div style="font-family:var(--fhud);font-size:.46rem;color:var(--dim);margin-bottom:6px">
+            For victims stuck inside buildings with no GPS signal.<br>
+            Operator clicks map to place exact victim location.
+          </div>
+          <div class="dcp-row">
+            <input id="pin-label" class="dcp-inp" placeholder="Victim label (e.g. 3rd Floor East Wing)" type="text"/>
+          </div>
+          <div class="dcp-row">
+            <input id="pin-floor" class="dcp-inp" placeholder="Floor / level (e.g. Floor 3)" type="text"/>
+          </div>
+          <div class="dcp-row">
+            <div class="dcp-btn cyan" onclick="addManualPinFromMap()">📍 CLICK MAP TO PIN</div>
+            <div class="dcp-btn red"  onclick="clearManualPins()">🗑 CLEAR PINS</div>
+          </div>
+          <div style="font-family:var(--fhud);font-size:.46rem;color:var(--dim);margin-top:4px" id="pin-status">
+            Manual pins: <span style="color:var(--acid)">0</span>
+          </div>
+          <div style="font-family:var(--fhud);font-size:.44rem;color:var(--dim);margin-top:5px;
+            border-top:1px solid rgba(255,255,255,.05);padding-top:5px">
+            TRIAGE PRIORITY SCORE<br>
+            <span class="triage-hi">HIGH 70-100</span> Rescue immediately &nbsp;
+            <span class="triage-mid">MED 40-69</span> &nbsp;
+            <span class="triage-lo">LOW &lt;40</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ALERT -->
+  <div class="aw">
+    <div id="abox">
+      <div class="aicon">🚨</div>
+      <div class="atxt">
+        <div class="amsg" id="amsg"></div>
+        <div class="asub" id="asub"></div>
+      </div>
+      <div class="art" id="art"></div>
+    </div>
+  </div>
+
+  <!-- MAP -->
+  <div style="grid-column:1/3;grid-row:6;background:rgba(0,255,65,.04);border:1px solid rgba(0,255,65,.18);border-radius:4px;overflow:hidden">
+    <div style="padding:8px 13px 6px;font-family:'Share Tech Mono',monospace;font-size:.56rem;letter-spacing:.22em;color:#3a6645;text-transform:uppercase;display:flex;align-items:center;gap:6px">
+      <span style="color:rgba(0,255,65,.5)">//</span>
+      TACTICAL MAP — 🔴 VICTIMS · 📷 CAMERAS · RESCUE TEAMS · ALL 4 ROAD ROUTES
+    </div>
+    <div id="map" style="height:500px;width:100%;display:block"></div>
+  </div>
+
+  <!-- 💾 DATA HISTORY PANEL -->
+  <div class="panel hp">
+    <div class="pi">
+      <div class="ctl"></div>
+      <div class="pl">💾 DATA HISTORY — LIVE LOG &amp; DOWNLOAD</div>
+
+      <!-- Stats bar -->
+      <div class="hstats">
+        <div class="hstat-box">PERSONS LOGGED<span class="sv" id="hs-pc">0</span></div>
+        <div class="hstat-box">GPS READINGS<span class="sv" id="hs-gc">0</span></div>
+        <div class="hstat-box">SESSION STARTED<span class="sv" id="hs-t0">—</span></div>
+        <div class="hstat-box">LAST ENTRY<span class="sv" id="hs-tl">—</span></div>
+        <div class="hstat-box">SAVE LOCATION<span class="sv" id="hs-dir" style="font-size:.44rem;color:var(--dim)">data/ folder</span></div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="htabs">
+        <div class="htab active" id="htab-p" onclick="switchTab('persons')">👤 DETECTED PERSONS</div>
+        <div class="htab"        id="htab-g" onclick="switchTab('gps')">📡 GPS HISTORY</div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="hbar">
+        <div class="hbar-left">
+          <div class="hcount" id="hlog-count">Showing <span>0</span> records (newest first)</div>
+        </div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap">
+          <div class="hbtn dl" id="btn-dl-p"  onclick="dlCSV('persons')">⬇ Download Persons CSV</div>
+          <div class="hbtn dl" id="btn-dl-g"  onclick="dlCSV('gps')"    style="display:none">⬇ Download GPS CSV</div>
+          <div class="hbtn clr" onclick="clearData()">🗑 Clear All Data</div>
+        </div>
+      </div>
+
+      <!-- Table container -->
+      <div class="htable-wrap" id="htable-wrap">
+        <div class="hempty" id="hempty">NO DATA YET — WAITING FOR DETECTIONS…</div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Helpers ──────────────────────────────────────────────
+const TCOLS = ['#00ff41','#00e5ff','#ffd600','#ff6d00'];
+const f6  = v => v==null?'—':Number(v).toFixed(6);
+const f1  = v => v==null?'—':Number(v).toFixed(1);
+const fkm = km => km<1?(km*1000).toFixed(0)+' m':km.toFixed(3)+' km';
+const MICON={depart:'🚀',arrive:'🏁',turn:'↩',merge:'🔀','on ramp':'↗','off ramp':'↘',
+             fork:'🔱',roundabout:'🔄',rotary:'🔄','new name':'➡','notification':'ℹ'};
+function sico(m,mod){
+  if(m==='turn'){
+    if(/sharp left|^left/.test(mod))  return '↰';
+    if(/sharp right|^right/.test(mod))return '↱';
+    if(/slight left/.test(mod))  return '↖';
+    if(/slight right/.test(mod)) return '↗';
+    if(/uturn/.test(mod)) return '↩';
+    return '➡';
+  }
+  return MICON[m]||'➡';
+}
+
+// ── Clock ─────────────────────────────────────────────────
+function tick(){document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-GB',{hour12:false})}
+tick();setInterval(tick,1000);
+
+// ── Reverse geocode ───────────────────────────────────────
+const geocache={};
+async function reverseGeo(lat,lon){
+  const k=`${lat.toFixed(4)},${lon.toFixed(4)}`;
+  if(geocache[k]) return geocache[k];
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
+                        {headers:{'Accept-Language':'en'}});
+    const d=await r.json();
+    geocache[k]=d.display_name||'Unknown location';
+    return geocache[k];
+  }catch{return 'Address lookup unavailable'}
+}
+
+// ── Map ───────────────────────────────────────────────────
+const map=L.map('map',{zoomControl:true,attributionControl:false}).setView([19.8500,75.3220],16);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:20}).addTo(map);
+// Force Leaflet to recalculate map size after CSS layout settles
+// Force map to render - called multiple times to handle any layout timing
+function fixMap(){
+  map.invalidateSize(true);
+  map.setView([19.8500,75.3220],16);
+}
+setTimeout(fixMap, 50);
+setTimeout(fixMap, 200);
+setTimeout(fixMap, 600);
+setTimeout(fixMap, 1500);
+window.addEventListener('load', ()=>{ setTimeout(fixMap, 100); setTimeout(fixMap, 500); });
+
+// Military grid
+const GO=L.Layer.extend({
+  onAdd(m){this._m=m;m.on('moveend zoomend',this._r,this);this._r()},
+  onRemove(m){m.off('moveend zoomend',this._r,this);if(this._s)m.getPanes().overlayPane.removeChild(this._s)},
+  _r(){
+    if(this._s)this._m.getPanes().overlayPane.removeChild(this._s);
+    const sz=this._m.getSize();
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('width',sz.x);svg.setAttribute('height',sz.y);
+    svg.style.cssText='position:absolute;top:0;left:0;pointer-events:none;opacity:.06';
+    for(let x=0;x<sz.x;x+=60){const l=document.createElementNS('http://www.w3.org/2000/svg','line');l.setAttribute('x1',x);l.setAttribute('y1',0);l.setAttribute('x2',x);l.setAttribute('y2',sz.y);l.setAttribute('stroke','#00ff41');l.setAttribute('stroke-width','0.5');svg.appendChild(l)}
+    for(let y=0;y<sz.y;y+=60){const l=document.createElementNS('http://www.w3.org/2000/svg','line');l.setAttribute('x1',0);l.setAttribute('y1',y);l.setAttribute('x2',sz.x);l.setAttribute('y2',y);l.setAttribute('stroke','#00ff41');l.setAttribute('stroke-width','0.5');svg.appendChild(l)}
+    this._s=svg;this._m.getPanes().overlayPane.appendChild(svg);
+  }
+});
+new GO().addTo(map);
+
+// Inject animations
+(()=>{const s=document.createElement('style');
+s.textContent=`.route-anim{stroke-dasharray:12 6;animation:march .55s linear infinite}
+@keyframes march{to{stroke-dashoffset:-18}}
+@keyframes ping{0%{transform:scale(.8);opacity:.9}100%{transform:scale(2.8);opacity:0}}`;
+document.head.appendChild(s)})();
+
+// Icons — each person gets own pink circle with P1,P2... label
+const PCOLS=['#ff1744','#ff4081','#f50057','#ff6090','#c51162','#ff80ab','#e91e63','#ff1744'];
+
+function victimIcon(pid, camId, globalIdx){
+  const col   = PCOLS[globalIdx % PCOLS.length];
+  const delay = (globalIdx * 0.35) % 1.5;
+  const label = 'P'+pid;
+  return L.divIcon({html:`
+    <div style="position:relative;width:54px;height:54px;display:flex;align-items:center;justify-content:center">
+      <div style="position:absolute;inset:-8px;border-radius:50%;
+        border:2px solid ${col};opacity:.5;
+        animation:ping 1.6s cubic-bezier(0,0,.2,1) infinite ${delay}s"></div>
+      <div style="position:absolute;inset:0px;border-radius:50%;
+        border:1.5px solid ${col};opacity:.3;
+        animation:ping 2.1s cubic-bezier(0,0,.2,1) infinite ${delay+.5}s"></div>
+      <div style="position:relative;z-index:2;width:36px;height:36px;border-radius:50%;
+        background:${col};border:2.5px solid #fff;
+        box-shadow:0 0 20px ${col},0 0 40px ${col}66;
+        display:flex;align-items:center;justify-content:center;
+        font-family:'Orbitron',sans-serif;font-size:10px;font-weight:900;
+        color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.9);letter-spacing:-.3px">${label}</div>
+      <div style="position:absolute;bottom:-17px;left:50%;transform:translateX(-50%);
+        font-family:'Share Tech Mono',monospace;font-size:8px;color:${col};white-space:nowrap;
+        background:rgba(2,10,4,.94);padding:1px 5px;border:1px solid ${col}99;border-radius:2px">
+        CAM${camId}</div>
+    </div>`,className:'',iconAnchor:[27,27]});
+}
+
+function camIcon(camId,color,online){
+  return L.divIcon({html:`
+    <div style="position:relative;text-align:center">
+      <div style="width:28px;height:28px;border-radius:4px;background:rgba(2,10,4,.94);
+        border:2px solid ${color};display:flex;align-items:center;justify-content:center;
+        font-size:14px;box-shadow:0 0 14px ${color}88;opacity:${online?1:.4}">📷</div>
+      <div style="position:absolute;bottom:-13px;left:50%;transform:translateX(-50%);
+        font-family:'Share Tech Mono',monospace;font-size:8.5px;color:${color};
+        background:rgba(2,10,4,.92);padding:1px 4px;border:1px solid ${color}44;white-space:nowrap;border-radius:2px">
+        CAM${camId}</div>
+    </div>`,className:'',iconAnchor:[14,14]});
+}
+
+function teamIcon(name,color,rank){
+  return L.divIcon({html:`
+    <div style="position:relative;text-align:center">
+      <div style="width:30px;height:30px;border-radius:50%;background:rgba(2,10,4,.94);border:2px solid ${color};
+        display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;
+        font-size:13px;font-weight:900;color:${color};box-shadow:0 0 16px ${color},0 0 32px ${color}33">
+        ${name.charAt(0)}</div>
+      <div style="position:absolute;bottom:-13px;left:50%;transform:translateX(-50%);
+        font-family:'Share Tech Mono',monospace;font-size:8.5px;color:${color};
+        background:rgba(2,10,4,.92);padding:1px 4px;border:1px solid ${color}44;white-space:nowrap;border-radius:2px">
+        #${rank} ${name.split(' ')[0]}</div>
+    </div>`,className:'',iconAnchor:[15,15]});
+}
+
+// Map state
+const vmks={};   // victim markers  key: `cam-pid`
+const tmks={};   // team markers
+const cmmks={};  // camera markers
+let   rlays=[];
+let   tPlaced=false;
+const CAMCOLS=['#00ff41','#ff6d00','#00e5ff','#ffd600'];
+
+function placeTeams(teams){
+  if(tPlaced) return;
+  teams.forEach((t,i)=>{
+    const c=TCOLS[i%TCOLS.length];
+    const m=L.marker([t.lat,t.lon],{icon:teamIcon(t.name,c,i+1)}).addTo(map);
+    m.bindPopup(`<b style="color:${c}">${t.name}</b><br>📍 ${t.loc||''}<br>LAT:${t.lat.toFixed(6)}<br>LON:${t.lon.toFixed(6)}`);
+    tmks[t.id]=m;
+  });
+  tPlaced=true;
+}
+
+function updateTeamIcons(ranked){
+  if(!ranked) return;
+  ranked.forEach((t,i)=>{if(tmks[t.id])tmks[t.id].setIcon(teamIcon(t.name,TCOLS[i%TCOLS.length],i+1))});
+}
+
+function clearRoutes(){rlays.forEach(l=>map.removeLayer(l));rlays=[]}
+
+function drawOneLine(route,color,isNearest,teamName,rank){
+  if(!route||!route.polyline||route.polyline.length<2) return;
+  if(isNearest){
+    rlays.push(L.polyline(route.polyline,{color:`${color}22`,weight:18,lineCap:'round',interactive:false}).addTo(map));
+    rlays.push(L.polyline(route.polyline,{color:`${color}66`,weight:7, lineCap:'round',interactive:false}).addTo(map));
+    rlays.push(L.polyline(route.polyline,{color:color,weight:2.5,opacity:.98,lineCap:'round',
+      interactive:false,className:'route-anim'}).addTo(map));
+    (route.steps||[]).forEach(step=>{
+      if(!step.location||step.location.length<2) return;
+      if(step.maneuver==='depart'||step.maneuver==='arrive') return;
+      const ll=[step.location[1],step.location[0]];
+      const tm=L.marker(ll,{icon:L.divIcon({
+        html:`<div style="width:18px;height:18px;border-radius:50%;background:rgba(2,10,4,.94);
+          border:1px solid ${color}88;display:flex;align-items:center;justify-content:center;
+          font-size:10px;cursor:pointer">${sico(step.maneuver,step.modifier)}</div>`,
+        className:'',iconAnchor:[9,9]}),interactive:true,zIndexOffset:-50}).addTo(map);
+      tm.bindTooltip(`<span style="font-family:'Share Tech Mono',monospace;font-size:.62rem">
+        ${step.instruction}<br><span style="color:#3a6645">
+        ${step.distance_m>=1000?(step.distance_m/1000).toFixed(1)+' km':step.distance_m+' m'}
+        </span></span>`,{permanent:false,direction:'top'});
+      rlays.push(tm);
+    });
+  } else {
+    rlays.push(L.polyline(route.polyline,{color:`${color}44`,weight:3,lineCap:'round',
+      dashArray:'8 10',interactive:false}).addTo(map));
+  }
+  const mp=route.polyline[Math.floor(route.polyline.length/2)];
+  const star=isNearest?'★ ':`#${rank} `;
+  const dl=L.marker(mp,{icon:L.divIcon({
+    html:`<div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:${color};
+      background:rgba(2,10,4,.93);padding:2px 7px;border:1px solid ${color}88;border-radius:3px;
+      white-space:nowrap;box-shadow:0 0 10px ${color}44;transform:translateX(-50%);
+      ${isNearest?`font-weight:bold`:''}">
+      ${star}${teamName.split(' ')[0]} 🛣${fkm(route.distance_km)}·⏱${route.duration_min}m</div>`,
+    className:'',iconAnchor:[0,8]}),interactive:false,zIndexOffset:-100}).addTo(map));
+  rlays.push(dl);
+}
+
+function drawAllRoutes(allRoutes){
+  const sorted=[...allRoutes].sort((a,b)=>a.is_nearest?1:-1);
+  const allPoly=[];
+  sorted.forEach(entry=>{
+    if(!entry.route||!entry.route.polyline) return;
+    drawOneLine(entry.route,TCOLS[(entry.rank-1)%TCOLS.length],entry.is_nearest,entry.team_name,entry.rank);
+    allPoly.push(...entry.route.polyline);
+  });
+  if(allPoly.length>1){try{map.fitBounds(L.polyline(allPoly).getBounds().pad(.13));}catch(e){}}
+}
+
+// ── Camera status bar ──────────────────────────────────────
+function updCamBar(cameras){
+  let online=0;
+  cameras.forEach(cam=>{
+    const cid=cam.id;
+    const on=cam.online;
+    if(on) online++;
+
+    // overlay badges on camera cells
+    const st=document.getElementById(`cst-${cid}`);
+    const cp=document.getElementById(`cp-${cid}`);
+    if(st){st.textContent=on?'ONLINE':'OFFLINE';st.className='cam-status '+(on?'on':'off')}
+    if(cp){
+      cp.textContent=`P:${cam.person_count}`;
+      cp.className='cam-persons'+(cam.person_count>0?'':' none');
+    }
+
+    // bottom status bar
+    const bs=document.getElementById(`cbs-${cid}`);
+    const bg=document.getElementById(`cbg-${cid}`);
+    const bd=document.getElementById(`cbd-${cid}`);
+    if(bs){bs.textContent=on?'ONLINE':'OFFLINE';bs.style.color=on?'var(--acid)':'var(--red)'}
+    if(bd) bd.style.background=on?'var(--acid)':'var(--red)';
+    if(bg){
+      const g=cam.gps;
+      bg.textContent=g&&g.valid?`${g.lat.toFixed(4)},${g.lon.toFixed(4)}`:'GPS: —';
+    }
+
+    // Camera marker on map
+    const col=CAMCOLS[(cid-1)%CAMCOLS.length];
+    if(!cmmks[cid]&&cam.gps&&cam.gps.valid){
+      const mk=L.marker([cam.gps.lat,cam.gps.lon],{icon:camIcon(cid,col,on),zIndexOffset:200}).addTo(map);
+      mk.bindPopup(`<b style="color:${col}">📷 ${cam.name}</b><br>IP: ${cam.ip}<br>
+        LAT: ${cam.gps.lat.toFixed(6)}<br>LON: ${cam.gps.lon.toFixed(6)}<br>
+        ${on?'<span style="color:#00ff41">● ONLINE</span>':'<span style="color:#ff1744">● OFFLINE</span>'}`);
+      cmmks[cid]=mk;
+    } else if(cmmks[cid]){
+      cmmks[cid].setIcon(camIcon(cid,col,on));
+      if(cam.gps&&cam.gps.valid) cmmks[cid].setLatLng([cam.gps.lat,cam.gps.lon]);
+    }
+  });
+  document.getElementById('hc').textContent=`${online}/4`;
+}
+
+// ── GPS panel ──────────────────────────────────────────────
+function updGPS(gps){
+  document.getElementById('vla').textContent=f6(gps.lat);
+  document.getElementById('vlo').textContent=f6(gps.lon);
+  document.getElementById('valt').textContent=f1(gps.alt);
+  document.getElementById('vacc').textContent=f1(gps.accuracy);
+  const lk=gps.valid;const src=(gps.source||'none').toUpperCase();
+  const b=document.getElementById('gbadge');
+  b.textContent=lk?`⬤ LOCKED [${src}]`:'⬤ ACQUIRING';
+  b.className=lk?'gbadge locked':'gbadge';
+  if(gps.accuracy!=null)
+    document.getElementById('abf').style.width=Math.max(0,Math.min(100,100-(gps.accuracy/500*100)))+'%';
+}
+
+// ── Victim location box ────────────────────────────────────
+let lastGeoLat=null,lastGeoLon=null;
+async function updVictimLocBox(persons,gps){
+  const box=document.getElementById('vloc-box');
+  if(!persons.length||!gps.valid){box.style.display='none';return;}
+  box.style.display='block';
+  const p=persons[0];const loc=p.loc||gps;
+  document.getElementById('vl-lat').textContent=loc.lat.toFixed(6)+'°N';
+  document.getElementById('vl-lon').textContent=loc.lon.toFixed(6)+'°E';
+  document.getElementById('vl-alt').textContent=loc.alt!=null?f1(loc.alt)+' m':'—';
+  document.getElementById('vl-acc').textContent=loc.accuracy!=null?f1(loc.accuracy)+' m':'—';
+  if(Math.abs(loc.lat-(lastGeoLat||0))>0.0001||Math.abs(loc.lon-(lastGeoLon||0))>0.0001){
+    lastGeoLat=loc.lat;lastGeoLon=loc.lon;
+    document.getElementById('vl-addr').textContent='Resolving address…';
+    reverseGeo(loc.lat,loc.lon).then(a=>document.getElementById('vl-addr').textContent='📌 '+a);
+  }
+}
+
+// ── Teams panel ────────────────────────────────────────────
+function updTeams(ranked,nearest){
+  if(!ranked||!ranked.length) return;
+  const ul=document.getElementById('tlist');ul.innerHTML='';
+  ranked.forEach((t,i)=>{
+    const iN=nearest&&t.id===nearest.id;
+    const c=TCOLS[i%TCOLS.length];
+    const li=document.createElement('li');li.className='ti'+(iN?' nearest':'');
+    li.style.animationDelay=(i*.05)+'s';
+    li.innerHTML=`
+      <div class="trank">#${i+1}</div>
+      <div class="tdot" style="background:${c};color:${c}"></div>
+      <div class="tinfo">
+        <div class="tname" style="color:${iN?'var(--acid)':'var(--text)'}">${t.name}</div>
+        <div class="tloc">📍 ${t.loc||''}</div>
+        <div class="tpos">${t.lat.toFixed(5)}°N &nbsp; ${t.lon.toFixed(5)}°E</div>
+      </div>
+      <div class="tdcol">
+        <div class="tdv">${fkm(t.distance_km)}</div>
+        <div class="tds">${iN?'NEAREST':'direct'}</div>
+      </div>
+      ${iN?'<div class="ntag">★ DISPATCH</div>':''}`;
+    ul.appendChild(li);
+  });
+}
+
+// ── Route steps ────────────────────────────────────────────
+function updSteps(route,teamName){
+  const w=document.getElementById('sw');
+  if(!route||!route.steps||!route.steps.length){
+    w.innerHTML='<div style="color:var(--dim);font-family:var(--fhud);font-size:.68rem;padding:4px 0">ROUTE LOADING…</div>';
+    document.getElementById('hr2').textContent='—';return;
+  }
+  document.getElementById('hr2').textContent=fkm(route.distance_km);
+  w.innerHTML='';
+  const box=document.createElement('div');box.className='sbox';
+  const hdr=document.createElement('div');hdr.className='shdr';
+  hdr.innerHTML=`<span>▶ ROUTE TO ${teamName.toUpperCase()}</span>
+    <span class="smeta">🛣 ${fkm(route.distance_km)} &nbsp;·&nbsp; ⏱ ${route.duration_min} min</span>`;
+  box.appendChild(hdr);
+  const ul=document.createElement('ul');ul.className='slist';
+  route.steps.forEach((s,i)=>{
+    const li=document.createElement('li');li.className='sitem';li.style.animationDelay=(i*.04)+'s';
+    const dm=s.distance_m>=1000?(s.distance_m/1000).toFixed(1)+' km':s.distance_m+' m';
+    li.innerHTML=`<div class="sicon">${sico(s.maneuver,s.modifier)}</div>
+      <div class="stxt">${s.instruction}</div><div class="sdst">${dm}</div>`;
+    ul.appendChild(li);
+  });
+  box.appendChild(ul);w.appendChild(box);
+}
+
+// ── Persons panel ──────────────────────────────────────────
+function updPersons(persons){
+  // Sort by triage priority score descending (highest priority first)
+  const sorted = [...persons].sort((a,b)=>(b.priority||0)-(a.priority||0));
+  document.getElementById('hv').textContent=sorted.length;
+  const g=document.getElementById('pg');g.innerHTML='';
+  if(!sorted.length){
+    g.innerHTML='<div style="color:var(--dim);font-family:var(--fhud);font-size:.68rem;padding:4px 0">NO PERSONS DETECTED ACROSS ANY CAMERA...</div>';
+    return;
+  }
+  sorted.forEach(p=>{
+    const loc=p.loc, route=p.route;
+    const score = p.priority || 0;
+    const warn  = p.route_warning;
+    const rmode = p.route_mode || 'driving';
+    const c=document.createElement('div');c.className='pcard';
+    // highlight card border by priority
+    if(score>=70) c.style.borderColor='rgba(255,23,68,.5)';
+    else if(score>=40) c.style.borderColor='rgba(255,109,0,.4)';
+    c.innerHTML=`
+      <div class="phdr">
+        <div class="pid"><div class="pping"></div>P${p.id}</div>
+        <div class="pcam-tag">CAM-${p.cam_id}</div>
+        <div class="pconf">${(p.conf*100).toFixed(0)}%</div>
+        ${triageBadge(score)}
+      </div>
+      <div class="pdata">
+        LAT:<span>${loc?loc.lat.toFixed(6):'NO GPS'}</span><br>
+        LON:<span>${loc?loc.lon.toFixed(6):'--'}</span><br>
+        ALT:<span>${loc&&loc.alt!=null?f1(loc.alt)+' m':'--'}</span><br>
+        ACC:<span>${loc&&loc.accuracy!=null?f1(loc.accuracy)+' m':'--'}</span>
+      </div>
+      ${p.nearest?`<div class="pnear">${p.nearest.name} | ${fkm(p.nearest.distance_km)} ${routeModeBadge(rmode)}</div>`:''}
+      ${route?`<div class="proute">Road: ${fkm(route.distance_km)} &middot; ETA ${route.duration_min} min</div>`:''}
+      ${warn?`<div class="route-warn">&#9888; ${warn}</div>`:''}
+      <div class="paddress" id="pa-${p.cam_id}-${p.id}">Resolving address...</div>`;
+    g.appendChild(c);
+    if(loc) reverseGeo(loc.lat,loc.lon).then(a=>{
+      const el=document.getElementById(`pa-${p.cam_id}-${p.id}`);
+      if(el) el.textContent='Location: '+a;
+    });
+  });
+}
+
+// ── Alert ──────────────────────────────────────────────────
+function updAlert(nearest,count,route){
+  const b=document.getElementById('abox');
+  if(nearest&&count>0){
+    b.classList.add('show');
+    document.getElementById('amsg').textContent=`${count} VICTIM(S) DETECTED — DISPATCHING ${nearest.name.toUpperCase()}`;
+    const ri=route?` · Road:${fkm(route.distance_km)} · ETA ${route.duration_min}min`:'';
+    document.getElementById('asub').textContent=`Direct:${fkm(nearest.distance_km)}${ri}`;
+    document.getElementById('art').innerHTML=`📍 ${nearest.loc||''}<br>${nearest.lat.toFixed(5)}°N, ${nearest.lon.toFixed(5)}°E`;
+  } else b.classList.remove('show');
+}
+
+// ── Map update ─────────────────────────────────────────────
+function updMap(data){
+  const gps=data.gps,persons=data.persons||[],teams=data.rescue_teams||[];
+  const ranked=data.global_ranked||[],route=data.global_route||null,nearest=data.global_nearest||null;
+
+  placeTeams(teams);
+  updateTeamIcons(ranked);
+  updCamBar(data.cameras||[]);
+
+  // ── Remove stale victim markers ──────────────────────────
+  const activeKeys=new Set(persons.map(p=>`${p.cam_id}-${p.id}`));
+  Object.keys(vmks).forEach(k=>{
+    if(!activeKeys.has(k)){map.removeLayer(vmks[k]);delete vmks[k]}
+  });
+
+  // ── Place ALL victim markers — each as individual pink circle ──
+  // Persons sharing the same GPS point get a small spiral offset so
+  // they don't stack exactly on top of each other
+  const posCount={};  // track how many persons at same rounded coord
+  persons.forEach((p,globalIdx)=>{
+    if(!p.loc) return;
+    const col = PCOLS[globalIdx % PCOLS.length];
+
+    // Compute a tiny spiral offset so P1,P2,P3 are all visible
+    const baseKey = `${p.loc.lat.toFixed(4)},${p.loc.lon.toFixed(4)}`;
+    posCount[baseKey] = (posCount[baseKey]||0);
+    const n     = posCount[baseKey];
+    posCount[baseKey]++;
+    const angle = n * (2.399);   // golden angle spread
+    const dist  = n===0 ? 0 : 0.000045 * (1 + Math.floor(n/6));  // ~5m spacing
+    const lat   = p.loc.lat + dist * Math.sin(angle);
+    const lon   = p.loc.lon + dist * Math.cos(angle);
+    const ll    = [lat, lon];
+
+    const key = `${p.cam_id}-${p.id}`;
+    const popup = `<b style="color:${col}">👤 P${p.id} [CAM-${p.cam_id}]</b><br>
+      CONF: ${(p.conf*100).toFixed(0)}%<br>
+      LAT: <b>${p.loc.lat.toFixed(6)}</b><br>
+      LON: <b>${p.loc.lon.toFixed(6)}</b><br>
+      ALT: ${p.loc.alt!=null?p.loc.alt.toFixed(1)+' m':'—'}<br>
+      ${p.nearest?`<span style="color:#00ff41">▶ NEAREST: ${p.nearest.name}</span><br>`:''}
+      ${p.route?`🛣 Road: ${fkm(p.route.distance_km)} &nbsp; ⏱ ETA: ${p.route.duration_min} min`:''}`;
+    if(vmks[key]){
+      vmks[key].setLatLng(ll);
+      vmks[key].getPopup().setContent(popup);
+      vmks[key].setIcon(victimIcon(p.id, p.cam_id, globalIdx));
+    } else {
+      const m=L.marker(ll,{icon:victimIcon(p.id,p.cam_id,globalIdx),zIndexOffset:500}).addTo(map);
+      m.bindPopup(popup);
+      vmks[key]=m;
+    }
+  });
+
+  // ── Draw routes ────────────────────────────────────────────
+  // Step 1: draw team routes (all 4 teams, nearest highlighted)
+  clearRoutes();
+  const allRoutes=data.all_routes||[];
+  if(allRoutes.length>0) drawAllRoutes(allRoutes);
+  else if(route&&nearest) drawOneLine(route,'#00ff41',true,nearest.name,1);
+
+  // Step 2: draw SHORTEST PATH from every detected person to their nearest team
+  // shown as a distinct thin coloured dashed line per person
+  persons.forEach((p,globalIdx)=>{
+    if(!p.loc||!p.route||!p.route.polyline||p.route.polyline.length<2) return;
+    const col = PCOLS[globalIdx % PCOLS.length];
+
+    // Glow shadow
+    const glow=L.polyline(p.route.polyline,{
+      color:col+'33',weight:14,lineCap:'round',interactive:false}).addTo(map);
+    rlays.push(glow);
+
+    // Bright animated line — thinner than team route so it's visually distinct
+    const line=L.polyline(p.route.polyline,{
+      color:col,weight:3,opacity:.9,lineCap:'round',
+      interactive:false,className:'route-anim'}).addTo(map);
+    rlays.push(line);
+
+    // Small label at midpoint
+    const mp=p.route.polyline[Math.floor(p.route.polyline.length/2)];
+    const lbl=L.marker(mp,{icon:L.divIcon({
+      html:`<div style="font-family:'Share Tech Mono',monospace;font-size:8.5px;color:${col};
+        background:rgba(2,10,4,.92);padding:1px 6px;border:1px solid ${col}88;border-radius:2px;
+        white-space:nowrap;transform:translateX(-50%)">
+        P${p.id}→${p.nearest.name.split(' ')[0]} ${fkm(p.route.distance_km)}·${p.route.duration_min}m</div>`,
+      className:'',iconAnchor:[0,8]}),interactive:false,zIndexOffset:-80}).addTo(map);
+    rlays.push(lbl);
+  });
+
+  if(nearest&&route) updSteps(route,nearest.name);
+}
+
+// ── Camera selector logic ──────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// DISASTER ROUTING CONTROL SYSTEM
+// ═══════════════════════════════════════════════════════════
+
+// ── State ────────────────────────────────────────────────
+let disasterMode    = 'normal';
+let mapClickMode    = null;   // null | 'block' | 'pin'
+const blockMarkers  = {};     // zone_id -> {circle, marker}
+const pinMarkers    = {};     // pin_id  -> marker
+
+const MODE_DESCS = {
+  normal:   '🚗 NORMAL — Vehicle road routing. Uses real roads, full turn-by-turn navigation.',
+  disaster: '🦺 DISASTER — Foot/walking routing through rubble gaps, stairs, open ground. Reroutes around blocked zones automatically. Rescuers move at 3 km/h foot speed.',
+  flood:    '🌊 FLOOD — Foot routing. Mark flooded roads as blocked zones and system avoids them. Compass bearing fallback if all routes flooded.',
+};
+
+const ZONE_COLS = {
+  rubble:   '#ff6d00',
+  flood:    '#00e5ff',
+  fire:     '#ff1744',
+  collapse: '#ffd600',
+};
+
+// ── Mode switcher ─────────────────────────────────────────
+async function setMode(mode){
+  try{
+    await fetch('/disaster/mode', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({mode})
+    });
+  } catch(e){ console.warn('Mode set failed (offline?)', e); }
+
+  disasterMode = mode;
+  ['normal','disaster','flood'].forEach(m=>{
+    const b = document.getElementById('mbtn-'+m);
+    if(b) b.classList.toggle('active', m===mode);
+  });
+  const desc  = document.getElementById('mode-desc');
+  const label = document.getElementById('mode-label');
+  if(desc)  desc.textContent  = MODE_DESCS[mode] || '';
+  if(label){
+    label.textContent = mode.toUpperCase();
+    label.style.color = mode==='normal'?'var(--acid)' : mode==='disaster'?'var(--orange)' : 'var(--cyan)';
+  }
+  // Update map panel title
+  const mp = document.querySelector('.mp .pl');
+  if(mp){
+    const tag = mode==='normal'?'🚗 ROAD':'🦺 FOOT RESCUE';
+    mp.textContent = `TACTICAL MAP [${tag}] — VICTIMS · CAMERAS · TEAMS · ROUTES`;
+  }
+}
+
+// ── Blocked zone marker on map ────────────────────────────
+function renderBlockedZone(zone){
+  const col = ZONE_COLS[zone.type] || '#ff6d00';
+  const circle = L.circle([zone.lat, zone.lon],{
+    radius:     zone.radius_m || 50,
+    color:      col,
+    fillColor:  col,
+    fillOpacity:.18,
+    weight:     2,
+    dashArray:  '6 4',
+    interactive:true,
+  }).addTo(map);
+  const ico = ZONE_ICONS[zone.type] || '⛔';
+  circle.bindPopup(`<b style="color:${col}">${ico} ${zone.label}</b><br>
+    Type: ${zone.type}<br>Radius: ${zone.radius_m}m<br>
+    <small>${zone.lat.toFixed(5)}, ${zone.lon.toFixed(5)}</small><br>
+    <span style="cursor:pointer;color:#ff1744" onclick="removeZone('${zone.id}')">🗑 Remove</span>`);
+  const lblMkr = L.marker([zone.lat, zone.lon],{
+    icon: L.divIcon({
+      html:`<div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:${col};
+        background:rgba(2,10,4,.92);padding:1px 5px;border:1px solid ${col}66;border-radius:2px;
+        white-space:nowrap;transform:translateX(-50%)">${ico} ${zone.label}</div>`,
+      className:'',iconAnchor:[0,0]}),
+    interactive:false,zIndexOffset:-100}).addTo(map);
+  blockMarkers[zone.id] = {circle, lblMkr};
+}
+
+async function addBlockedZoneFromMap(){
+  mapClickMode = 'block';
+  map.getContainer().style.cursor = 'crosshair';
+  const mp = document.querySelector('.mp .pl');
+  if(mp) mp.textContent = '📍 CLICK ON MAP to place blocked zone...';
+}
+
+async function addManualPinFromMap(){
+  mapClickMode = 'pin';
+  map.getContainer().style.cursor = 'crosshair';
+  const mp = document.querySelector('.mp .pl');
+  if(mp) mp.textContent = '📍 CLICK ON MAP to place victim pin...';
+}
+
+map.on('click', async function(e){
+  if(!mapClickMode) return;
+  const lat = e.latlng.lat, lon = e.latlng.lng;
+  const mode = mapClickMode;
+  mapClickMode = null;
+  map.getContainer().style.cursor = '';
+
+  if(mode === 'block'){
+    const label  = document.getElementById('zone-label').value  || 'Blocked Zone';
+    const radius = parseFloat(document.getElementById('zone-radius').value) || 50;
+    const type   = document.getElementById('zone-type').value   || 'rubble';
+    const id     = 'z' + Date.now();
+    const zone   = {lat, lon, radius_m:radius, label, type, id};
+    try{
+      await fetch('/disaster/block',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(zone)
+      });
+    } catch(e){ console.warn('Block zone offline', e); }
+    renderBlockedZone(zone);
+    refreshZoneList([...Object.values(blockMarkers)].map(m=>m._zone).filter(Boolean));
+    fetchDisasterStatus();
+  }
+
+  if(mode === 'pin'){
+    const label = document.getElementById('pin-label').value || 'Victim';
+    const floor = document.getElementById('pin-floor').value || 'Unknown';
+    const id    = 'p' + Date.now();
+    const pin   = {lat, lon, label, floor, id};
+    try{
+      await fetch('/disaster/pin',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(pin)
+      });
+    } catch(e){ console.warn('Pin offline', e); }
+    renderManualPin(pin);
+    fetchDisasterStatus();
+  }
+});
+
+function renderManualPin(pin){
+  const m = L.marker([pin.lat, pin.lon],{
+    icon: L.divIcon({
+      html:`<div style="position:relative;text-align:center">
+        <div style="width:34px;height:34px;border-radius:50%;
+          background:rgba(255,214,0,.9);border:2.5px solid #fff;
+          box-shadow:0 0 20px #ffd600,0 0 40px #ffd60066;
+          display:flex;align-items:center;justify-content:center;
+          font-size:16px">👤</div>
+        <div style="position:absolute;bottom:-17px;left:50%;transform:translateX(-50%);
+          font-family:'Share Tech Mono',monospace;font-size:8px;color:#ffd600;
+          background:rgba(2,10,4,.94);padding:1px 5px;border:1px solid #ffd60088;
+          border-radius:2px;white-space:nowrap">${pin.label}<br>
+          <span style="font-size:7px;color:#b8a000">${pin.floor}</span></div>
+      </div>`,
+      className:'',iconAnchor:[17,17]}),
+    zIndexOffset:600}).addTo(map);
+  m.bindPopup(`<b style="color:#ffd600">👤 ${pin.label}</b><br>
+    Floor: ${pin.floor}<br>
+    LAT: ${pin.lat.toFixed(6)}<br>
+    LON: ${pin.lon.toFixed(6)}<br>
+    <span style="cursor:pointer;color:#ff1744" onclick="removePin('${pin.id}')">🗑 Remove</span>`);
+  pinMarkers[pin.id] = m;
+}
+
+async function removeZone(id){
+  try{ await fetch('/disaster/block/'+id, {method:'DELETE'}); } catch(e){}
+  if(blockMarkers[id]){
+    map.removeLayer(blockMarkers[id].circle);
+    map.removeLayer(blockMarkers[id].lblMkr);
+    delete blockMarkers[id];
+  }
+  fetchDisasterStatus();
+}
+
+async function removePin(id){
+  try{ await fetch('/disaster/pin/clear', {method:'POST'}); } catch(e){}
+  if(pinMarkers[id]){ map.removeLayer(pinMarkers[id]); delete pinMarkers[id]; }
+  fetchDisasterStatus();
+}
+
+async function clearAllZones(){
+  try{ await fetch('/disaster/block/clear',{method:'POST'}); } catch(e){}
+  Object.values(blockMarkers).forEach(b=>{
+    map.removeLayer(b.circle); map.removeLayer(b.lblMkr);
+  });
+  Object.keys(blockMarkers).forEach(k=>delete blockMarkers[k]);
+  document.getElementById('zone-list').innerHTML='';
+  fetchDisasterStatus();
+}
+
+async function clearManualPins(){
+  try{ await fetch('/disaster/pin/clear',{method:'POST'}); } catch(e){}
+  Object.values(pinMarkers).forEach(m=>map.removeLayer(m));
+  Object.keys(pinMarkers).forEach(k=>delete pinMarkers[k]);
+  document.getElementById('pin-status').innerHTML=
+    'Manual pins: <span style="color:var(--acid)">0</span>';
+}
+
+// Zone type emoji lookup (rubble/flood/fire/collapse -> emoji)
+const ZONE_ICONS = {'rubble':'🧱','flood':'🌊','fire':'🔥','collapse':'🏚'};
+
+function refreshZoneList(zones){
+  const el = document.getElementById('zone-list');
+  if(!el) return;
+  if(!zones||!zones.length){ el.innerHTML='<div style="font-family:var(--fhud);font-size:.44rem;color:var(--dim)">No blocked zones marked</div>'; return; }
+  el.innerHTML = zones.map(z=>{
+    const ico = ZONE_ICONS[z.type] || '⛔';
+    return `<div class="zone-item ${z.type}">
+      <span>${ico} ${z.label} (${z.radius_m}m)</span>
+      <span class="zone-x" onclick="removeZone('${z.id}')">✕</span>
+    </div>`;
+  }).join('');
+}
+
+async function fetchDisasterStatus(){
+  try{
+    const r = await fetch('/disaster/status');
+    const d = await r.json();
+    // Update zone list
+    refreshZoneList(d.blocked_zones||[]);
+    // Update pin count
+    const pinCount = (d.manual_pins||[]).length;
+    const ps = document.getElementById('pin-status');
+    if(ps) ps.innerHTML = `Manual pins: <span style="color:var(--acid)">${pinCount}</span>`;
+    // Sync mode buttons
+    if(d.mode && d.mode !== disasterMode) setMode(d.mode);
+  } catch(e){ /* offline */ }
+}
+fetchDisasterStatus();
+setInterval(fetchDisasterStatus, 10000);
+
+// ── Add route warning + mode badge + triage to person cards ──
+function triageBadge(score){
+  if(score>=70) return `<span class="triage-hi">🔴 PRIORITY ${score}</span>`;
+  if(score>=40) return `<span class="triage-mid">🟠 MED ${score}</span>`;
+  return `<span class="triage-lo">🟢 LOW ${score}</span>`;
+}
+function routeModeBadge(mode){
+  if(!mode||mode==='none') return '';
+  const cls = mode==='driving'?'rmb-driving':mode==='foot'?'rmb-foot':'rmb-straight';
+  const lbl = mode==='driving'?'🚗 ROAD':mode==='foot'?'🦺 FOOT':'🧭 BEARING';
+  return `<span class="route-mode-badge ${cls}">${lbl}</span>`;
+}
+
+// ── Manual pin markers on map ─────────────────────────────
+function updManualPins(pins){
+  if(!pins||!pins.length) return;
+  pins.forEach(pin=>{
+    if(!pinMarkers[pin.id]) renderManualPin(pin);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// ── Camera Selection System ──────────────────────────────
+// activeCams: Set of camera IDs currently SELECTED (shown)
+const activeCams = new Set([1,2,3,4]);
+
+const CAM_NAMES = {
+  1:'CAM-1 · North Gate',
+  2:'CAM-2 · East Block',
+  3:'CAM-3 · Main Building',
+  4:'CAM-4 · South Exit'
+};
+
+function applyLayout(){
+  const n    = activeCams.size;
+  const grid = document.getElementById('camgrid');
+
+  // Set grid column class
+  grid.className = 'cam-grid cols-' + Math.max(1, n);
+
+  const shown = [1,2,3,4].filter(id => activeCams.has(id));
+
+  [1,2,3,4].forEach(id => {
+    const cell  = document.getElementById('cell-' + id);
+    const cbRow = document.getElementById('cb-'   + id);
+    const img   = cell ? cell.querySelector('img') : null;
+    const isOn  = activeCams.has(id);
+
+    // Show / hide the grid cell and the status bar row
+    if(cell)  cell.style.display  = isOn ? '' : 'none';
+    if(cbRow) cbRow.style.display = isOn ? '' : 'none';
+
+    // Lazy-load fix: assign src when cell becomes visible
+    if(isOn && img){
+      const wantSrc = '/video_feed/' + id;
+      if(!img.src.endsWith(wantSrc)) img.src = wantSrc;
+    }
+
+    // span2: when 3 cams active the odd one out spans full width
+    if(cell) cell.classList.remove('span2');
+    if(n === 3 && shown[2] === id && cell) cell.classList.add('span2');
+  });
+
+  // Update sel-btn appearance
+  [1,2,3,4].forEach(id => {
+    const btn = document.getElementById('sbtn-' + id);
+    if(!btn) return;
+    if(activeCams.has(id)) btn.classList.add('active');
+    else                   btn.classList.remove('active');
+  });
+
+  // Header camera count
+  document.getElementById('hc').textContent = n + '/4';
+
+  // Status bar: hide/show columns
+  const cambar = document.getElementById('cambar');
+  if(cambar) cambar.style.gridTemplateColumns = `repeat(${n},1fr)`;
+
+  // Update panel title to show which cams are active
+  const title = document.getElementById('cam-panel-title');
+  if(title){
+    if(n === 4){
+      title.textContent = '// LIVE FEEDS — ALL 4 CAMERAS — YOLOV8 DETECTION';
+    } else {
+      const names = shown.map(id => 'CAM-'+id).join(' + ');
+      title.textContent = '// LIVE FEEDS — ' + names + ' — YOLOV8 DETECTION';
+    }
+  }
+}
+
+function toggleCam(id){
+  if(activeCams.has(id)){
+    // Allow deselecting only if at least 1 will remain
+    if(activeCams.size === 1){
+      // Flash the button to indicate can't deselect last one
+      const btn = document.getElementById('sbtn-' + id);
+      if(btn){
+        btn.style.outline = '1px solid var(--red)';
+        setTimeout(()=>{ btn.style.outline=''; }, 500);
+      }
+      return;
+    }
+    activeCams.delete(id);
+  } else {
+    activeCams.add(id);
+  }
+  applyLayout();
+}
+
+function selectAll(){
+  [1,2,3,4].forEach(id => activeCams.add(id));
+  applyLayout();
+}
+
+function selectNone(){
+  // Keep at least one — select only cam 1
+  activeCams.clear();
+  activeCams.add(1);
+  applyLayout();
+}
+
+// Run layout on page load
+applyLayout();
+
+// ── DATA HISTORY PANEL ────────────────────────────────────
+let activeTab = 'persons';   // 'persons' | 'gps'
+let lastPersonsLog = [];
+let lastGpsLog     = [];
+
+function switchTab(tab){
+  activeTab = tab;
+  document.getElementById('htab-p').classList.toggle('active', tab==='persons');
+  document.getElementById('htab-g').classList.toggle('active', tab==='gps');
+  document.getElementById('btn-dl-p').style.display = tab==='persons' ? '' : 'none';
+  document.getElementById('btn-dl-g').style.display = tab==='gps'     ? '' : 'none';
+  renderTable();
+}
+
+function renderTable(){
+  const wrap  = document.getElementById('htable-wrap');
+  const empty = document.getElementById('hempty');
+  const rows  = activeTab==='persons' ? lastPersonsLog : lastGpsLog;
+  document.getElementById('hlog-count').innerHTML =
+    `Showing <span>${rows.length}</span> records (newest first)`;
+
+  if(!rows.length){
+    wrap.innerHTML = '<div class="hempty" id="hempty">' +
+      (activeTab==='persons'
+        ? 'NO DETECTIONS YET — PERSONS WILL APPEAR HERE WHEN DETECTED…'
+        : 'NO GPS READINGS YET — WILL LOG WHEN CAMERAS COME ONLINE…') +
+      '</div>';
+    return;
+  }
+
+  if(activeTab === 'persons'){
+    let html = `<table class="hlog">
+      <thead><tr>
+        <th>#</th><th>TIMESTAMP</th><th>CAM</th><th>PERSON</th>
+        <th>CONF</th><th>LATITUDE</th><th>LONGITUDE</th>
+        <th>ALT (m)</th><th>ACC (m)</th><th>GPS SRC</th>
+        <th>NEAREST TEAM</th><th>ROAD KM</th><th>ETA (min)</th>
+      </tr></thead><tbody>`;
+    rows.forEach((r,i)=>{
+      html += `<tr>
+        <td class="tc">${i+1}</td>
+        <td class="tc">${r.timestamp||'—'}</td>
+        <td class="tn">CAM-${r.cam_id}</td>
+        <td class="tp">P${r.person_id}</td>
+        <td class="tconf">${r.confidence_pct!=null?r.confidence_pct+'%':'—'}</td>
+        <td class="tg">${r.latitude||'—'}</td>
+        <td class="tg">${r.longitude||'—'}</td>
+        <td class="tc">${r.altitude_m||'—'}</td>
+        <td class="tc">${r.accuracy_m||'—'}</td>
+        <td class="tc">${r.gps_source||'—'}</td>
+        <td class="tn">${r.nearest_team||'—'}</td>
+        <td class="tg">${r.road_distance_km||'—'}</td>
+        <td class="tc">${r.eta_min||'—'}</td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+  } else {
+    let html = `<table class="hlog">
+      <thead><tr>
+        <th>#</th><th>TIMESTAMP</th><th>CAM</th><th>CAM NAME</th>
+        <th>LATITUDE</th><th>LONGITUDE</th>
+        <th>ALT (m)</th><th>ACC (m)</th><th>SOURCE</th>
+      </tr></thead><tbody>`;
+    rows.forEach((r,i)=>{
+      html += `<tr>
+        <td class="tc">${i+1}</td>
+        <td class="tc">${r.timestamp||'—'}</td>
+        <td class="tn">CAM-${r.cam_id}</td>
+        <td class="tc">${r.cam_name||'—'}</td>
+        <td class="tg">${r.latitude||'—'}</td>
+        <td class="tg">${r.longitude||'—'}</td>
+        <td class="tc">${r.altitude_m||'—'}</td>
+        <td class="tc">${r.accuracy_m||'—'}</td>
+        <td class="tc">${r.gps_source||'—'}</td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+  }
+}
+
+async function fetchHistory(){
+  try{
+    const r = await fetch('/data/log');
+    const d = await r.json();
+    lastPersonsLog = d.persons_log || [];
+    lastGpsLog     = d.gps_log     || [];
+
+    // Stats bar
+    document.getElementById('hs-pc').textContent = d.persons_total || 0;
+    document.getElementById('hs-gc').textContent = d.gps_total     || 0;
+    if(lastPersonsLog.length){
+      document.getElementById('hs-tl').textContent =
+        (lastPersonsLog[0].time || lastPersonsLog[0].timestamp || '—');
+    }
+    if(lastPersonsLog.length){
+      const oldest = lastPersonsLog[lastPersonsLog.length-1];
+      document.getElementById('hs-t0').textContent =
+        (oldest.time || oldest.timestamp || '—');
+    }
+
+    // Fetch stats for save path
+    const s = await fetch('/data/stats');
+    const sd = await s.json();
+    const dirEl = document.getElementById('hs-dir');
+    if(dirEl && sd.data_dir) dirEl.textContent = sd.data_dir;
+
+    renderTable();
+  } catch(e){ console.warn('History fetch:', e); }
+}
+
+function dlCSV(type){
+  const url = type==='persons' ? '/data/download/persons' : '/data/download/gps';
+  const a   = document.createElement('a');
+  a.href    = url;
+  a.click();
+}
+
+async function clearData(){
+  if(!confirm('Clear ALL stored data? This will delete all CSV records and cannot be undone.')) return;
+  try{
+    await fetch('/data/clear', {method:'POST'});
+    lastPersonsLog = [];
+    lastGpsLog     = [];
+    document.getElementById('hs-pc').textContent = '0';
+    document.getElementById('hs-gc').textContent = '0';
+    document.getElementById('hs-t0').textContent = '—';
+    document.getElementById('hs-tl').textContent = '—';
+    renderTable();
+  } catch(e){ console.warn('Clear error:', e); }
+}
+
+// Poll history every 3 seconds (slightly slower than main poll)
+fetchHistory();
+setInterval(fetchHistory, 3000);
+
+// ── Poll ───────────────────────────────────────────────────
+async function poll(){
+  try{
+    const r = await fetch('/rescue_teams');
+    const d = await r.json();
+
+    // Filter data to only the selected (active) cameras
+    const filteredPersons = (d.persons ||[]).filter(p => activeCams.has(p.cam_id));
+    const filteredCams    = (d.cameras ||[]).filter(c => activeCams.has(c.id));
+
+    // Recompute nearest/routes from filtered persons only
+    const fd = Object.assign({}, d, {
+      persons:      filteredPersons,
+      person_count: filteredPersons.length,
+      cameras:      filteredCams,
+    });
+
+    updGPS(fd.gps);
+    updTeams(fd.global_ranked, fd.global_nearest);
+    updPersons(filteredPersons);
+    updAlert(fd.global_nearest, filteredPersons.length, fd.global_route);
+    updVictimLocBox(filteredPersons, fd.gps);
+    updMap(fd);
+    // Show manual pins (indoor victims placed by operator)
+    if(d.manual_pins) updManualPins(d.manual_pins);
+  } catch(e){ console.warn('Poll:', e); }
+}
+poll();
+setInterval(poll, 2000);
+</script>
+</body>
+</html>
