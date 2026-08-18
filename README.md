@@ -112,78 +112,78 @@ The system also includes ML-based disaster prediction modules for **flood, wildf
 
 ### 1. Landing Page
 
-The landing page provides an overview of the AI-based disaster prediction, victim detection, and rescue path planning system.
+![Landing Page](Images/Landing_page.png)
 
-![Landing Page](https://raw.githubusercontent.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/main/Images/Landing_page.png)
+The landing page provides an overview of the AI-based disaster prediction, victim detection, and rescue path planning system.
 
 ---
 
 ### 2. Person Detection
 
-The computer vision module uses YOLOv8 to detect people/victims from disaster-affected area footage captured by the drone.
+![Person Detection](Images/Persons_Detection.jpeg)
 
-![Person Detection](https://raw.githubusercontent.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/main/Images/Persons_Detection.jpeg)
+The computer vision module uses YOLOv8 to detect people/victims from disaster-affected area footage captured by the drone.
 
 ---
 
 ### 3. Shortest Rescue Path on Map
 
-After detecting a victim, the system identifies the victim's location and calculates an optimal rescue route using geographical mapping and routing.
+![Shortest Path on Map](Images/Shortest_Path_on_map.png)
 
-![Shortest Path on Map](https://raw.githubusercontent.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/main/Images/Shortest_Path_on_map.png)
+The system identifies the victim's location and calculates an optimal rescue route using geographical mapping and routing.
 
 ---
 
 ### 4. Victim Details
 
-The system displays important information about detected victims to support rescue team decision-making.
+![Victims Details](Images/Victims_Details.png)
 
-![Victims Details](https://raw.githubusercontent.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/main/Images/Victims_Details.png)
+The system displays important information about detected victims to support rescue team decision-making.
 
 ---
 
 ### 5. Live Disaster Alert
 
-The system provides live disaster alerts and displays the current disaster status to support early response.
+![Live Disaster Alert](Images/Live_Disaster_Alert.png)
 
-![Live Disaster Alert](https://raw.githubusercontent.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/main/Images/Live_Disaster_Alert.png)
+The system provides live disaster alerts and displays the current disaster status.
 
 ---
 
 ### 6. Live Disaster Alerts
 
-Additional live alert information is presented to help rescue teams monitor ongoing disaster situations.
+![Live Disaster Alerts](Images/Live_Disaster_Alerts_2.png)
 
-![Live Disaster Alerts](https://raw.githubusercontent.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/main/Images/Live_Disaster_Alerts_2.png)
+Additional live alert information helps rescue teams monitor ongoing disaster situations.
 
 ---
 
 ### 7. Live Disaster Alerts – Detailed View
 
-A detailed alert view provides additional information about detected disaster events and their severity.
+![Live Disaster Alerts Detailed View](Images/Live_Disaster_Alerts_3.png)
 
-![Live Disaster Alerts Detailed View](https://raw.githubusercontent.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/main/Images/Live_Disaster_Alerts_3.png)
+The detailed alert view provides additional information about detected disaster events and their severity.
 
 ---
 
 ### 8. Live Alert Dashboard
 
-The dashboard provides a centralized view of active alerts and disaster-related information.
+![Live Alert Dashboard](Images/Live_Alert_Dashboard.png)
 
-![Live Alert Dashboard](https://raw.githubusercontent.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/main/Images/Live_Alert_Dashboard.png)
+The dashboard provides a centralized view of active alerts and disaster-related information.
 
 ---
 
 ### 9. Live Alert Dashboard – Detailed View
 
-The detailed dashboard provides additional monitoring information for ongoing rescue and disaster-management operations.
+![Live Alert Dashboard Detailed View](Images/Live_Alert_Dashboard_2.png)
 
-![Live Alert Dashboard Detailed View](https://raw.githubusercontent.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/main/Images/Live_Alert_Dashboard_2.png)
+The detailed dashboard provides additional monitoring information for rescue operations.
 
 ---
 
 ### 10. Disaster Statistics
 
-The system presents disaster-related statistics to help understand disaster patterns and support data-driven decision-making.
+![Disaster Statistics](Images/Disaster_Statistics.png)
 
-![Disaster Statistics](https://raw.githubusercontent.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/main/Images/Disaster_Statistics.png)
+The system presents disaster-related statistics to support data-driven decision-making.
