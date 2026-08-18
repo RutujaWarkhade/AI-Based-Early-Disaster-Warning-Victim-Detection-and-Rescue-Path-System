@@ -108,14 +108,13 @@ The system also includes ML-based disaster prediction modules for **flood, wildf
 │ Safe & Shortest Rescue     │
 │ Route to Victim             │
 └────────────────────────────┘
-
 ## 🖥️ System Screenshots
 
 ### 1. Landing Page
 
 The landing page provides an overview of the AI-based disaster prediction, victim detection, and rescue path planning system.
 
-![Landing Page](https://github.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/blob/main/Images/Landing_page.png)
+![Landing Page](https://raw.githubusercontent.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/main/Images/Landing_page.png)
 
 ---
 
@@ -123,7 +122,7 @@ The landing page provides an overview of the AI-based disaster prediction, victi
 
 The computer vision module uses YOLOv8 to detect people/victims from disaster-affected area footage captured by the drone.
 
-![Person Detection](https://github.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/blob/main/Images/Persons_Detection.jpeg)
+![Person Detection](https://raw.githubusercontent.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/main/Images/Persons_Detection.jpeg)
 
 ---
 
@@ -131,7 +130,7 @@ The computer vision module uses YOLOv8 to detect people/victims from disaster-af
 
 After detecting a victim, the system identifies the victim's location and calculates an optimal rescue route using geographical mapping and routing.
 
-![Shortest Path on Map](https://github.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/blob/main/Images/Shortest_Path_on_map.png)
+![Shortest Path on Map](https://raw.githubusercontent.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/main/Images/Shortest_Path_on_map.png)
 
 ---
 
@@ -139,7 +138,7 @@ After detecting a victim, the system identifies the victim's location and calcul
 
 The system displays important information about detected victims to support rescue team decision-making.
 
-![Victims Details](https://github.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/blob/main/Images/Victims_Details.png)
+![Victims Details](https://raw.githubusercontent.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/main/Images/Victims_Details.png)
 
 ---
 
@@ -147,7 +146,7 @@ The system displays important information about detected victims to support resc
 
 The system provides live disaster alerts and displays the current disaster status to support early response.
 
-![Live Disaster Alert](https://github.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/blob/main/Images/Live_Disaster_Alert.png)
+![Live Disaster Alert](https://raw.githubusercontent.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/main/Images/Live_Disaster_Alert.png)
 
 ---
 
@@ -155,7 +154,7 @@ The system provides live disaster alerts and displays the current disaster statu
 
 Additional live alert information is presented to help rescue teams monitor ongoing disaster situations.
 
-![Live Disaster Alerts](https://github.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/blob/main/Images/Live_Disaster_Alerts_2.png)
+![Live Disaster Alerts](https://raw.githubusercontent.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/main/Images/Live_Disaster_Alerts_2.png)
 
 ---
 
@@ -163,7 +162,7 @@ Additional live alert information is presented to help rescue teams monitor ongo
 
 A detailed alert view provides additional information about detected disaster events and their severity.
 
-![Live Disaster Alerts Detailed View](https://github.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/blob/main/Images/Live_Disaster_Alerts_3.png)
+![Live Disaster Alerts Detailed View](https://raw.githubusercontent.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/main/Images/Live_Disaster_Alerts_3.png)
 
 ---
 
@@ -171,7 +170,7 @@ A detailed alert view provides additional information about detected disaster ev
 
 The dashboard provides a centralized view of active alerts and disaster-related information.
 
-![Live Alert Dashboard](https://github.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/blob/main/Images/Live_Alert_Dashboard.png)
+![Live Alert Dashboard](https://raw.githubusercontent.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/main/Images/Live_Alert_Dashboard.png)
 
 ---
 
@@ -179,7 +178,7 @@ The dashboard provides a centralized view of active alerts and disaster-related 
 
 The detailed dashboard provides additional monitoring information for ongoing rescue and disaster-management operations.
 
-![Live Alert Dashboard Detailed View](https://github.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/blob/main/Images/Live_Alert_Dashboard_2.png)
+![Live Alert Dashboard Detailed View](https://raw.githubusercontent.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/main/Images/Live_Alert_Dashboard_2.png)
 
 ---
 
@@ -187,5 +186,4 @@ The detailed dashboard provides additional monitoring information for ongoing re
 
 The system presents disaster-related statistics to help understand disaster patterns and support data-driven decision-making.
 
-![Disaster Statistics](https://github.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/blob/main/Images/Disaster_Statistics.png)
-
+![Disaster Statistics](https://raw.githubusercontent.com/RutujaWarkhade/AI-Based-Early-Disaster-Warning-Victim-Detection-and-Rescue-Path-System/main/Images/Disaster_Statistics.png)
